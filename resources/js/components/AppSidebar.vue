@@ -34,6 +34,34 @@ const mainNavItems: NavItem[] = [
     },
 
 
+{
+    title: 'Clientes',
+    href: '/cliente',
+    icon: LayoutGrid,
+    nivel: 0,
+},
+
+{
+    title: 'Motos',
+    href: '/moto',
+    icon: LayoutGrid,
+    nivel: 0,
+},
+
+{
+    title: 'Servicos',
+    href: '/servico',
+    icon: LayoutGrid,
+    nivel: 0,
+},
+
+{
+    title: 'OrdemServicos',
+    href: '/ordemservico',
+    icon: LayoutGrid,
+    nivel: 0,
+},
+
 // Novos Itens do Menu
 
 

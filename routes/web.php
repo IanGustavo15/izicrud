@@ -6,6 +6,10 @@ use Laravel\Fortify\Features;
 use App\Http\Controllers\PermissoesController;
 
 // Controllers
+use App\Http\Controllers\OrdemServicoController;
+use App\Http\Controllers\ServicoController;
+use App\Http\Controllers\MotoController;
+use App\Http\Controllers\ClienteController;
 
 
 
@@ -41,6 +45,54 @@ Route::group([
 
 
 // Rotas
+Route::group([
+    'middleware' => ['auth', 'verified', 'permissao:99'],
+], function () {
+    Route::controller(OrdemServicoController::class)->group(function () {
+        Route::get('/ordemservico', 'index')->name('ordemservico.index');
+        Route::get('/ordemservico/create', 'create')->name('ordemservico.create');
+        Route::post('/ordemservico', 'store')->name('ordemservico.store');
+        Route::get('/ordemservico/{ordemservico}/edit', 'edit')->name('ordemservico.edit');
+        Route::put('/ordemservico/{ordemservico}', 'update')->name('ordemservico.update');
+        Route::delete('/ordemservico/{ordemservico}', 'destroy')->name('ordemservico.destroy');
+    });
+});
+Route::group([
+    'middleware' => ['auth', 'verified', 'permissao:99'],
+], function () {
+    Route::controller(ServicoController::class)->group(function () {
+        Route::get('/servico', 'index')->name('servico.index');
+        Route::get('/servico/create', 'create')->name('servico.create');
+        Route::post('/servico', 'store')->name('servico.store');
+        Route::get('/servico/{servico}/edit', 'edit')->name('servico.edit');
+        Route::put('/servico/{servico}', 'update')->name('servico.update');
+        Route::delete('/servico/{servico}', 'destroy')->name('servico.destroy');
+    });
+});
+Route::group([
+    'middleware' => ['auth', 'verified', 'permissao:99'],
+], function () {
+    Route::controller(MotoController::class)->group(function () {
+        Route::get('/moto', 'index')->name('moto.index');
+        Route::get('/moto/create', 'create')->name('moto.create');
+        Route::post('/moto', 'store')->name('moto.store');
+        Route::get('/moto/{moto}/edit', 'edit')->name('moto.edit');
+        Route::put('/moto/{moto}', 'update')->name('moto.update');
+        Route::delete('/moto/{moto}', 'destroy')->name('moto.destroy');
+    });
+});
+Route::group([
+    'middleware' => ['auth', 'verified', 'permissao:99'],
+], function () {
+    Route::controller(ClienteController::class)->group(function () {
+        Route::get('/cliente', 'index')->name('cliente.index');
+        Route::get('/cliente/create', 'create')->name('cliente.create');
+        Route::post('/cliente', 'store')->name('cliente.store');
+        Route::get('/cliente/{cliente}/edit', 'edit')->name('cliente.edit');
+        Route::put('/cliente/{cliente}', 'update')->name('cliente.update');
+        Route::delete('/cliente/{cliente}', 'destroy')->name('cliente.destroy');
+    });
+});
 
 
 require __DIR__.'/settings.php';
