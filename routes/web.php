@@ -6,6 +6,7 @@ use Laravel\Fortify\Features;
 use App\Http\Controllers\PermissoesController;
 
 // Controllers
+use App\Http\Controllers\VeiculoController;
 use App\Http\Controllers\ClienteController;
 
 
@@ -42,6 +43,18 @@ Route::group([
 
 
 // Rotas
+Route::group([
+    'middleware' => ['auth', 'verified', 'permissao:99'],
+], function () {
+    Route::controller(VeiculoController::class)->group(function () {
+        Route::get('/veiculo', 'index')->name('veiculo.index');
+        Route::get('/veiculo/create', 'create')->name('veiculo.create');
+        Route::post('/veiculo', 'store')->name('veiculo.store');
+        Route::get('/veiculo/{veiculo}/edit', 'edit')->name('veiculo.edit');
+        Route::put('/veiculo/{veiculo}', 'update')->name('veiculo.update');
+        Route::delete('/veiculo/{veiculo}', 'destroy')->name('veiculo.destroy');
+    });
+});
 Route::group([
     'middleware' => ['auth', 'verified', 'permissao:99'],
 ], function () {

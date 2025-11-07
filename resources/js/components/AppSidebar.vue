@@ -41,6 +41,13 @@ const mainNavItems: NavItem[] = [
     nivel: 0,
 },
 
+{
+    title: 'Veiculos',
+    href: '/veiculo',
+    icon: LayoutGrid,
+    nivel: 0,
+},
+
 // Novos Itens do Menu
 
 
