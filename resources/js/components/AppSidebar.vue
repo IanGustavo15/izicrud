@@ -48,6 +48,13 @@ const mainNavItems: NavItem[] = [
     nivel: 0,
 },
 
+{
+    title: 'Pecas',
+    href: '/peca',
+    icon: LayoutGrid,
+    nivel: 0,
+},
+
 // Novos Itens do Menu
 
 

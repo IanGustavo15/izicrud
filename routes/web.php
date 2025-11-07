@@ -6,6 +6,7 @@ use Laravel\Fortify\Features;
 use App\Http\Controllers\PermissoesController;
 
 // Controllers
+use App\Http\Controllers\PecaController;
 use App\Http\Controllers\VeiculoController;
 use App\Http\Controllers\ClienteController;
 
@@ -43,6 +44,18 @@ Route::group([
 
 
 // Rotas
+Route::group([
+    'middleware' => ['auth', 'verified', 'permissao:99'],
+], function () {
+    Route::controller(PecaController::class)->group(function () {
+        Route::get('/peca', 'index')->name('peca.index');
+        Route::get('/peca/create', 'create')->name('peca.create');
+        Route::post('/peca', 'store')->name('peca.store');
+        Route::get('/peca/{peca}/edit', 'edit')->name('peca.edit');
+        Route::put('/peca/{peca}', 'update')->name('peca.update');
+        Route::delete('/peca/{peca}', 'destroy')->name('peca.destroy');
+    });
+});
 Route::group([
     'middleware' => ['auth', 'verified', 'permissao:99'],
 ], function () {
