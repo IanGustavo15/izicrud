@@ -14,17 +14,15 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 
 const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'Peças', href: '/peca' },
+    { title: 'Servicos', href: '/servico' },
 ];
 
-const headerTitle = 'Peças';
-const headerDescription = 'Gerencie suas peças aqui.';
+const headerTitle = 'Serviços';
+const headerDescription = 'Gerencie seus serviços aqui.';
 
 const props = defineProps<{
-    item?: { id: number; descricao: string; codigo_unico: string; preco_de_custo: number; preco_de_venda: number; quantidade: number; estoque: number };
+    item?: { id: number; nome: string; descricao: string; preco_mao_de_obra: number; tempo_estimado: number };
     sidebarNavItems: { title: string; href: string }[];
-
-
 
 
 
@@ -38,12 +36,10 @@ const alertMessage = ref('');
 const alertVariant = ref<'success' | 'warning' | 'destructive'>('success');
 
 const form = useForm({
+    nome: props.item?.nome.toString() || '',
     descricao: props.item?.descricao.toString() || '',
-    codigo_unico: props.item?.codigo_unico.toString() || '',
-    preco_de_custo: props.item?.preco_de_custo.toString() || 0,
-    preco_de_venda: props.item?.preco_de_venda.toString() || 0,
-    quantidade: props.item?.quantidade.toString() || 0,
-    estoque: props.item?.estoque.toString() || 0
+    preco_mao_de_obra: props.item?.preco_mao_de_obra.toString() || 0,
+    tempo_estimado: props.item?.tempo_estimado.toString() || 0
 });
 
 const formErrors = ref<Record<string, string[]>>({});
@@ -58,27 +54,27 @@ function showAlert(message: string, variant: 'success' | 'warning' | 'destructiv
 
 function submitForm() {
     if (isEditing.value) {
-        form.put(`/peca/${props.item?.id}`, {
+        form.put(`/servico/${props.item?.id}`, {
             onSuccess: () => {
-                showAlert('Peça atualizada com sucesso!', 'success');
+                showAlert('Serviço atualizado com sucesso!', 'success');
                 formErrors.value = {};
             },
             onError: (errors) => {
                 formErrors.value = errors as unknown as Record<string, string[]>;
                 const errorMessages = Object.values(formErrors.value).flat().join(', ');
-                showAlert(`Erro ao atualizar a peça: ${errorMessages}`, 'destructive');
+                showAlert(`Erro ao atualizar o serviço: ${errorMessages}`, 'destructive');
             },
         });
     } else {
-        form.post('/peca', {
+        form.post('/servico', {
             onSuccess: () => {
-                showAlert('Peça criada com sucesso!', 'success');
+                showAlert('Serviço criado com sucesso!', 'success');
                 formErrors.value = {};
             },
             onError: (errors) => {
                 formErrors.value = errors as unknown as Record<string, string[]>;
                 const errorMessages = Object.values(formErrors.value).flat().join(', ');
-                showAlert(`Erro ao criar a peça: ${errorMessages}`, 'destructive');
+                showAlert(`Erro ao criar o serviço: ${errorMessages}`, 'destructive');
             },
         });
     }
@@ -86,11 +82,11 @@ function submitForm() {
 </script>
 
 <template>
-    <Head :title="isEditing ? 'Editar Peça' : 'Criar Peça'" />
+    <Head :title="isEditing ? 'Editar Serviço' : 'Criar Serviço'" />
 
     <AppLayout :breadcrumbs="breadcrumbs" :headerTitle="headerTitle" :headerDescription="headerDescription" :sidebarNavItems="props.sidebarNavItems">
         <div class="space-y-6">
-            <HeadingSmall :title="isEditing ? 'Editar Peça' : 'Criar Nova Peça'" description="Gerencie os detalhes da peça" />
+            <HeadingSmall :title="isEditing ? 'Editar Serviço' : 'Criar Novo Serviço'" description="Gerencie os detalhes do serviço" />
         </div>
         <div class="flex h-full flex-1 flex-col gap-4 rounded-xl p-4">
             <Alert v-if="showAlertState" class="mb-4" :class="{
@@ -103,34 +99,26 @@ function submitForm() {
             </Alert>
             <div class="relative min-h-[100vh] flex-1 rounded-xl border border-sidebar-border/70 dark:border-sidebar-border md:min-h-min">
                 <div class="flex flex-col gap-4 p-4">
-                    <h2 class="text-lg font-semibold">{{ isEditing ? 'Editar Peça' : 'Criar Nova Peça' }}</h2>
+                    <h2 class="text-lg font-semibold">{{ isEditing ? 'Editar Serviço' : 'Criar Novo Serviço' }}</h2>
                     <form @submit.prevent="submitForm" class="space-y-6">
                         <div>
+                    <Label for="nome">Nome</Label>
+                    <Input id="nome" v-model="form.nome" type="text" placeholder="Digite Nome" />
+                </div>
+                <div>
                     <Label for="descricao">Descrição</Label>
                     <Input id="descricao" v-model="form.descricao" type="text" placeholder="Digite Descrição" />
                 </div>
                 <div>
-                    <Label for="codigo_unico">Código Único</Label>
-                    <Input id="codigo_unico" v-model="form.codigo_unico" type="text" placeholder="Digite Código Único" maxlength="7"/>
+                    <Label for="preco_mao_de_obra">Preço da Mão de Obra (R$)</Label>
+                    <Input id="preco_mao_de_obra" v-model.number="form.preco_mao_de_obra" type="number" step="0.01" placeholder="Digite Preço da Mão de Obra" />
                 </div>
                 <div>
-                    <Label for="preco_de_custo">Preço de Custo (R$)</Label>
-                    <Input id="preco_de_custo" v-model.number="form.preco_de_custo" type="number" step="0.01" placeholder="Digite Preço de Custo" min="0.01"/>
-                </div>
-                <div>
-                    <Label for="preco_de_venda">Preço de Venda (R$)</Label>
-                    <Input id="preco_de_venda" v-model.number="form.preco_de_venda" type="number" step="0.01" placeholder="Digite Preço de Venda" min="0.01"/>
-                </div>
-                <div>
-                    <Label for="quantidade">Quantidade</Label>
-                    <Input id="quantidade" v-model.number="form.quantidade" type="number" step="1" placeholder="Digite Quantidade" min="1"/>
-                </div>
-                <div>
-                    <Label for="estoque">Estoque</Label>
-                    <Input id="estoque" v-model.number="form.estoque" type="number" step="1" placeholder="Digite Estoque" min="0"/>
+                    <Label for="tempo_estimado">Tempo Estimado (Minutos)</Label>
+                    <Input id="tempo_estimado" v-model.number="form.tempo_estimado" type="number" step="1" placeholder="Digite Tempo Estimado" min="1"/>
                 </div>
                         <Button type="submit" class="my-4" :disabled="form.processing">
-                            {{ isEditing ? 'Atualizar Peça' : 'Criar Peça' }}
+                            {{ isEditing ? 'Atualizar Serviço' : 'Criar Serviço' }}
                         </Button>
                     </form>
                 </div>

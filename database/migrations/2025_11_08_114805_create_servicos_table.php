@@ -1,0 +1,26 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        Schema::create('servicos', function (Blueprint $table) {
+            $table->id();
+            $table->string('nome');
+            $table->string('descricao');
+            $table->float('preco_mao_de_obra', 2);
+            $table->integer('tempo_estimado', false, true);
+            $table->boolean('deleted')->default(false);
+            $table->timestamps();
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::dropIfExists('servicos');
+    }
+};

@@ -42,15 +42,22 @@ const mainNavItems: NavItem[] = [
 },
 
 {
-    title: 'Veiculos',
+    title: 'Veículos',
     href: '/veiculo',
     icon: LayoutGrid,
     nivel: 0,
 },
 
 {
-    title: 'Pecas',
+    title: 'Peças',
     href: '/peca',
+    icon: LayoutGrid,
+    nivel: 0,
+},
+
+{
+    title: 'Serviços',
+    href: '/servico',
     icon: LayoutGrid,
     nivel: 0,
 },
@@ -75,7 +82,7 @@ const footerNavItems: NavItem[] = [
     //     nivel: 99
     // },
     {
-        title: 'Permissoes',
+        title: 'Permissões',
         href: '/permissoes',
         icon: LayoutGrid,
         nivel: 0,
