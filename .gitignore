@@ -10,6 +10,7 @@
 /resources/js/routes
 /resources/js/wayfinder
 /vendor
+ComandosCrud.txt
 .DS_Store
 .env
 .env.backup
