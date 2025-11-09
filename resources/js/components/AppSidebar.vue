@@ -34,6 +34,76 @@ const mainNavItems: NavItem[] = [
     },
 
 
+{
+    title: 'Simulados',
+    href: '/simulado',
+    icon: LayoutGrid,
+    nivel: 0,
+},
+
+{
+    title: 'Questaos',
+    href: '/questao',
+    icon: LayoutGrid,
+    nivel: 0,
+},
+
+{
+    title: 'Ranks',
+    href: '/rank',
+    icon: LayoutGrid,
+    nivel: 0,
+},
+
+{
+    title: 'Opcaos',
+    href: '/opcao',
+    icon: LayoutGrid,
+    nivel: 0,
+},
+
+{
+    title: 'NotaCortes',
+    href: '/notacorte',
+    icon: LayoutGrid,
+    nivel: 0,
+},
+
+{
+    title: 'Metricas',
+    href: '/metrica',
+    icon: LayoutGrid,
+    nivel: 0,
+},
+
+{
+    title: 'Inscricaos',
+    href: '/inscricao',
+    icon: LayoutGrid,
+    nivel: 0,
+},
+
+{
+    title: 'Respostas',
+    href: '/resposta',
+    icon: LayoutGrid,
+    nivel: 0,
+},
+
+{
+    title: 'Resultados',
+    href: '/resultado',
+    icon: LayoutGrid,
+    nivel: 0,
+},
+
+{
+    title: 'SimuladoQuestaos',
+    href: '/simuladoquestao',
+    icon: LayoutGrid,
+    nivel: 0,
+},
+
 // Novos Itens do Menu
 
 

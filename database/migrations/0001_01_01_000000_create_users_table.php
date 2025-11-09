@@ -3,6 +3,7 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use Faker\Factory as Faker;
 
 return new class extends Migration
 {
@@ -58,6 +59,18 @@ return new class extends Migration
             'created_at' => now(),
             'updated_at' => now(),
         ]);
+
+        $faker = Faker::create('pt_BR');
+
+        for ($i = 0; $i < 150; $i++) {
+            $_tempNome = $faker->name;
+            DB::table('users')->insert([
+                'permissao_id'=> 3,
+                'name'=> $_tempNome,
+                'email'=> "$_tempNome@$_tempNome.com",
+                'password'=> bcrypt("$_tempNome@$_tempNome.com"),
+            ]);
+        }
 
 
         Schema::create('password_reset_tokens', function (Blueprint $table) {
