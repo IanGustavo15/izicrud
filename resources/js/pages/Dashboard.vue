@@ -27,27 +27,27 @@ const breadcrumbs: BreadcrumbItem[] = [
 ];
 
 const dataBar = [
-  { name: "Jan", total: Math.floor(Math.random() * 2000) + 500, predicted: Math.floor(Math.random() * 2000) + 500 },
-  { name: "Feb", total: Math.floor(Math.random() * 2000) + 500, predicted: Math.floor(Math.random() * 2000) + 500 },
-  { name: "Mar", total: Math.floor(Math.random() * 2000) + 500, predicted: Math.floor(Math.random() * 2000) + 500 },
-  { name: "Apr", total: Math.floor(Math.random() * 2000) + 500, predicted: Math.floor(Math.random() * 2000) + 500 },
-  { name: "May", total: Math.floor(Math.random() * 2000) + 500, predicted: Math.floor(Math.random() * 2000) + 500 },
-  { name: "Jun", total: Math.floor(Math.random() * 2000) + 500, predicted: Math.floor(Math.random() * 2000) + 500 },
-  { name: "Jul", total: Math.floor(Math.random() * 2000) + 500, predicted: Math.floor(Math.random() * 2000) + 500 },
+  { name: "Jan", mediaGeral: Math.floor(Math.random() * 100), minhaMedia: Math.floor(Math.random() * 100)},
+  { name: "Feb", mediaGeral: Math.floor(Math.random() * 100), minhaMedia: Math.floor(Math.random() * 100)},
+  { name: "Mar", mediaGeral: Math.floor(Math.random() * 100), minhaMedia: Math.floor(Math.random() * 100)},
+  { name: "Apr", mediaGeral: Math.floor(Math.random() * 100), minhaMedia: Math.floor(Math.random() * 100)},
+  { name: "May", mediaGeral: Math.floor(Math.random() * 100), minhaMedia: Math.floor(Math.random() * 100)},
+  { name: "Jun", mediaGeral: Math.floor(Math.random() * 100), minhaMedia: Math.floor(Math.random() * 100)},
+  { name: "Jul", mediaGeral: Math.floor(Math.random() * 100), minhaMedia: Math.floor(Math.random() * 100)},
 ]
 
 const notifications = [
   {
-    title: "Your call has been confirmed.",
-    description: "1 hour ago",
+    title: "Você foi promovido no Rank Geral.",
+    description: "agora",
   },
   {
-    title: "You have a new message!",
-    description: "1 hour ago",
+    title: "Guia de Estudos pronto!!",
+    description: "ontem",
   },
   {
-    title: "Your subscription is expiring soon!",
-    description: "2 hours ago",
+    title: "Sua aplicação foi confirmada.",
+    description: "2 dias atras",
   },
 ]
 
@@ -95,7 +95,7 @@ const notifications = [
                     <Card>
                     <CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle class="text-sm font-medium">
-                        Total Revenue
+                        Avaliação Geral
                         </CardTitle>
                         <svg
                         xmlns="http://www.w3.org/2000/svg"
@@ -112,17 +112,17 @@ const notifications = [
                     </CardHeader>
                     <CardContent>
                         <div class="text-2xl font-bold">
-                        $45,231.89
+                        89.4%
                         </div>
                         <p class="text-xs text-muted-foreground">
-                        +20.1% from last month
+                        +20.1% em relação mês passado
                         </p>
                     </CardContent>
                     </Card>
                     <Card>
                     <CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle class="text-sm font-medium">
-                        Subscriptions
+                        Simulados
                         </CardTitle>
                         <svg
                         xmlns="http://www.w3.org/2000/svg"
@@ -141,17 +141,17 @@ const notifications = [
                     </CardHeader>
                     <CardContent>
                         <div class="text-2xl font-bold">
-                        +2350
+                        9
                         </div>
                         <p class="text-xs text-muted-foreground">
-                        +180.1% from last month
+                        +4 em relação mês passado
                         </p>
                     </CardContent>
                     </Card>
                     <Card>
                     <CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle class="text-sm font-medium">
-                        Sales
+                        Acertividade
                         </CardTitle>
                         <svg
                         xmlns="http://www.w3.org/2000/svg"
@@ -169,17 +169,17 @@ const notifications = [
                     </CardHeader>
                     <CardContent>
                         <div class="text-2xl font-bold">
-                        +12,234
+                        66%
                         </div>
                         <p class="text-xs text-muted-foreground">
-                        +19% from last month
+                        +19% em relação mês passado
                         </p>
                     </CardContent>
                     </Card>
                     <Card>
                     <CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle class="text-sm font-medium">
-                        Active Now
+                        Inscrições Ativas
                         </CardTitle>
                         <svg
                         xmlns="http://www.w3.org/2000/svg"
@@ -196,10 +196,10 @@ const notifications = [
                     </CardHeader>
                     <CardContent>
                         <div class="text-2xl font-bold">
-                        +573
+                        2
                         </div>
                         <p class="text-xs text-muted-foreground">
-                        +201 since last hour
+                        3 pendentes
                         </p>
                     </CardContent>
                     </Card>
@@ -207,13 +207,13 @@ const notifications = [
                 <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
                     <Card class="col-span-4">
                     <CardHeader>
-                        <CardTitle>Overview</CardTitle>
+                        <CardTitle>Grafico de Acertividade</CardTitle>
                     </CardHeader>
                     <CardContent class="pl-2">
                         <BarChart
                             index="name"
                             :data="dataBar"
-                            :categories="['total', 'predicted']"
+                            :categories="['mediaGeral', 'minhaMedia']"
                             :y-formatter="(tick, i) => {
                             return typeof tick === 'number'
                                 ? `$ ${new Intl.NumberFormat('us').format(tick).toString()}`
@@ -226,18 +226,18 @@ const notifications = [
 
                       <Card class="col-span-3">
                         <CardHeader>
-                        <CardTitle>Notifications</CardTitle>
-                        <CardDescription>You have 3 unread messages.</CardDescription>
+                        <CardTitle>Notificações</CardTitle>
+                        <CardDescription>Você tem 3 notificações.</CardDescription>
                         </CardHeader>
                         <CardContent class="grid gap-4">
                         <div class=" flex items-center space-x-4 rounded-md border p-4">
                             <Bell />
                             <div class="flex-1 space-y-1">
                             <p class="text-sm font-medium leading-none">
-                                Push Notifications
+                                Notificar no Celular
                             </p>
                             <p class="text-sm text-muted-foreground">
-                                Send notifications to device.
+                                Eviar notificações pelo Wpp.
                             </p>
                             </div>
                             <Switch />
@@ -261,7 +261,7 @@ const notifications = [
                         </CardContent>
                         <CardFooter>
                         <Button class="w-full">
-                            <Check class="mr-2 h-4 w-4" /> Mark all as read
+                            <Check class="mr-2 h-4 w-4" /> Marcar todas como lidas
                         </Button>
                         </CardFooter>
                     </Card>
