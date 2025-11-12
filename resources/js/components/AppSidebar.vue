@@ -38,28 +38,49 @@ const mainNavItems: NavItem[] = [
     title: 'Clientes',
     href: '/cliente',
     icon: LayoutGrid,
-    nivel: 0,
+    nivel: 1,
 },
 
 {
     title: 'Veículos',
     href: '/veiculo',
     icon: LayoutGrid,
-    nivel: 0,
+    nivel: 1,
 },
 
 {
     title: 'Peças',
     href: '/peca',
     icon: LayoutGrid,
-    nivel: 0,
+    nivel: 1,
 },
 
 {
     title: 'Serviços',
     href: '/servico',
     icon: LayoutGrid,
-    nivel: 0,
+    nivel: 3,
+},
+
+{
+    title: 'Pivot PecaServicos',
+    href: '/pecaservico',
+    icon: LayoutGrid,
+    nivel: 2,
+},
+
+{
+    title: 'OrdemDeServicos',
+    href: '/ordemdeservico',
+    icon: LayoutGrid,
+    nivel: 3,
+},
+
+{
+    title: 'Pivot ServicoOrdemDeServicos',
+    href: '/servicoordemdeservico',
+    icon: LayoutGrid,
+    nivel: 2,
 },
 
 // Novos Itens do Menu

@@ -102,6 +102,7 @@ class ClienteController extends Controller
         return [
             ['title' => 'Todos os Clientes', 'href' => '/cliente'],
             ['title' => 'Criar Novo Cliente', 'href' => '/cliente/create'],
+            ['title' => 'Todos as Ordens de Serviço', 'href' => '/ordemdeservico'],
         ];
     }
 }

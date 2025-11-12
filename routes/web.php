@@ -6,6 +6,9 @@ use Laravel\Fortify\Features;
 use App\Http\Controllers\PermissoesController;
 
 // Controllers
+use App\Http\Controllers\ServicoOrdemDeServicoController;
+use App\Http\Controllers\OrdemDeServicoController;
+use App\Http\Controllers\PecaServicoController;
 use App\Http\Controllers\ServicoController;
 use App\Http\Controllers\PecaController;
 use App\Http\Controllers\VeiculoController;
@@ -46,7 +49,46 @@ Route::group([
 
 // Rotas
 Route::group([
-    'middleware' => ['auth', 'verified', 'permissao:99'],
+    'middleware' => ['auth', 'verified', 'permissao:2'],
+], function () {
+    Route::controller(ServicoOrdemDeServicoController::class)->group(function () {
+        Route::get('/servicoordemdeservico', 'index')->name('servicoordemdeservico.index');
+        Route::get('/servicoordemdeservico/create', 'create')->name('servicoordemdeservico.create');
+        Route::post('/servicoordemdeservico', 'store')->name('servicoordemdeservico.store');
+        Route::get('/servicoordemdeservico/{servicoordemdeservico}/edit', 'edit')->name('servicoordemdeservico.edit');
+        Route::put('/servicoordemdeservico/{servicoordemdeservico}', 'update')->name('servicoordemdeservico.update');
+        Route::delete('/servicoordemdeservico/{servicoordemdeservico}', 'destroy')->name('servicoordemdeservico.destroy');
+
+    });
+});
+Route::group([
+    'middleware' => ['auth', 'verified', 'permissao:3'],
+], function () {
+    Route::controller(OrdemDeServicoController::class)->group(function () {
+        Route::get('/ordemdeservico', 'index')->name('ordemdeservico.index');
+        Route::get('/ordemdeservico/create', 'create')->name('ordemdeservico.create');
+        Route::post('/ordemdeservico', 'store')->name('ordemdeservico.store');
+        Route::get('/ordemdeservico/{ordemdeservico}/edit', 'edit')->name('ordemdeservico.edit');
+        Route::put('/ordemdeservico/{ordemdeservico}', 'update')->name('ordemdeservico.update');
+        Route::delete('/ordemdeservico/{ordemdeservico}', 'destroy')->name('ordemdeservico.destroy');
+
+        Route::get('/ordemdeservico/getVeiculoPorCliente/{id_cliente}', 'getVeiculoPorCliente')->name('ordemdeservico.getVeiculoPorCliente');
+    });
+});
+Route::group([
+    'middleware' => ['auth', 'verified', 'permissao:2'],
+], function () {
+    Route::controller(PecaServicoController::class)->group(function () {
+        Route::get('/pecaservico', 'index')->name('pecaservico.index');
+        Route::get('/pecaservico/create', 'create')->name('pecaservico.create');
+        Route::post('/pecaservico', 'store')->name('pecaservico.store');
+        Route::get('/pecaservico/{pecaservico}/edit', 'edit')->name('pecaservico.edit');
+        Route::put('/pecaservico/{pecaservico}', 'update')->name('pecaservico.update');
+        Route::delete('/pecaservico/{pecaservico}', 'destroy')->name('pecaservico.destroy');
+    });
+});
+Route::group([
+    'middleware' => ['auth', 'verified', 'permissao:2'],
 ], function () {
     Route::controller(ServicoController::class)->group(function () {
         Route::get('/servico', 'index')->name('servico.index');
@@ -58,7 +100,7 @@ Route::group([
     });
 });
 Route::group([
-    'middleware' => ['auth', 'verified', 'permissao:99'],
+    'middleware' => ['auth', 'verified', 'permissao:2'],
 ], function () {
     Route::controller(PecaController::class)->group(function () {
         Route::get('/peca', 'index')->name('peca.index');
@@ -70,7 +112,7 @@ Route::group([
     });
 });
 Route::group([
-    'middleware' => ['auth', 'verified', 'permissao:99'],
+    'middleware' => ['auth', 'verified', 'permissao:3'],
 ], function () {
     Route::controller(VeiculoController::class)->group(function () {
         Route::get('/veiculo', 'index')->name('veiculo.index');
@@ -82,7 +124,7 @@ Route::group([
     });
 });
 Route::group([
-    'middleware' => ['auth', 'verified', 'permissao:99'],
+    'middleware' => ['auth', 'verified', 'permissao:3'],
 ], function () {
     Route::controller(ClienteController::class)->group(function () {
         Route::get('/cliente', 'index')->name('cliente.index');

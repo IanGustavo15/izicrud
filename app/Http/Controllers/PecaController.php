@@ -46,11 +46,11 @@ class PecaController extends Controller
     {
         $request->validate([
             'descricao' => 'required|string',
-            'codigo_unico' => 'required|string|max:255',
-            'preco_de_custo' => 'required|numeric',
-            'preco_de_venda' => 'required|numeric',
+            'codigo_unico' => 'required|string|unique:pecas,codigo_unico',
+            'preco_de_custo' => 'required|numeric|min:0',
+            'preco_de_venda' => 'required|numeric|min:0',
             'quantidade' => 'required|integer',
-            'estoque' => 'required|integer',
+            'estoque' => 'required|integer|min:0',
         ]);
 
         Peca::create($request->all());
@@ -88,11 +88,11 @@ class PecaController extends Controller
     {
         $request->validate([
             'descricao' => 'required|string',
-            'codigo_unico' => 'required|string|max:255',
-            'preco_de_custo' => 'required|numeric',
-            'preco_de_venda' => 'required|numeric',
+            'codigo_unico' => 'required|string|unique:pecas,codigo_unico',
+            'preco_de_custo' => 'required|numeric|min:0',
+            'preco_de_venda' => 'required|numeric|min:0',
             'quantidade' => 'required|integer',
-            'estoque' => 'required|integer',
+            'estoque' => 'required|integer|min:0',
         ]);
 
         $peca->update($request->all());

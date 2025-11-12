@@ -56,16 +56,17 @@ class VeiculoController extends Controller
             'ano' => 'required|integer',
             'tipo' => 'required|integer|max:2',
         ]);
+        // dd($request);
 
         Veiculo::create($request->all());
 
-        return redirect()->route('veiculo.index')->with('success', 'Veiculo criado com sucesso.');
+        return redirect()->route('veiculo.index')->with('success', 'Veículo criado com sucesso.');
     }
 
         public function edit(Veiculo $veiculo)
     {
         if ($veiculo->deleted) {
-            return redirect()->route('veiculo.index')->with('error', 'Veiculo excluído.');
+            return redirect()->route('veiculo.index')->with('error', 'Veículo excluído.');
         }
 
         $id_clienteOptions = \App\Models\Cliente::where('deleted', 0)->orderBy('id', 'desc')->get()->map(function ($item) {
@@ -103,14 +104,14 @@ class VeiculoController extends Controller
 
         $veiculo->update($request->all());
 
-        return redirect()->route('veiculo.index')->with('success', 'Veiculo atualizado com sucesso.');
+        return redirect()->route('veiculo.index')->with('success', 'Veículo atualizado com sucesso.');
     }
 
     public function destroy(Veiculo $veiculo)
     {
         $veiculo->update(['deleted' => 1]);
 
-        return redirect()->route('veiculo.index')->with('success', 'Veiculo excluído com sucesso.');
+        return redirect()->route('veiculo.index')->with('success', 'Veículo excluído com sucesso.');
     }
 
     private function getSidebarNavItems(): array
@@ -118,6 +119,7 @@ class VeiculoController extends Controller
         return [
             ['title' => 'Todos os Veiculos', 'href' => '/veiculo'],
             ['title' => 'Criar Novo Veiculo', 'href' => '/veiculo/create'],
+            ['title' => 'Todos as Ordens de Serviço', 'href' => '/ordemdeservico'],
         ];
     }
 }
