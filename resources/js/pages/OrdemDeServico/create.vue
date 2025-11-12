@@ -97,6 +97,10 @@ import {
     interface Servico{
             value: number;label: string; descricao: string;
         };
+        interface ServicoOrdemDeServico{
+            value: number;label: string; descricao: string;
+        };
+
     const props = defineProps < {
         item ? : {
             id: number;id_cliente: number;id_veiculo: number;data_de_entrada: string;data_de_saida: string;status: number;valor_total: number;observacao: string
@@ -112,6 +116,7 @@ import {
             value: number;label: string
         } [];
         servicos: Servico [];
+        id_servicoEdit: ServicoOrdemDeServico [];
 
 
 
@@ -146,6 +151,11 @@ import {
         valor_total: props.item?.valor_total.toString() || 0,
         observacao: props.item?.observacao.toString() || '',
         servicos: [] as Array <{
+            value: number,
+            label: string,
+            descricao: string,
+        }>,
+        id_servicoEdit: props.id_servicoEdit as Array <{
             value: number,
             label: string,
             descricao: string,
@@ -330,8 +340,30 @@ import {
                                         <div class="grid gap-3 sm:grid-cols-6">
                                             <div class="sm:col-span-2">
                                                 <Label class="text-xs py-1">Serviço</Label>
-                                                <Select v-model="item.value" @update:model-value="(value) => {
+                                                <Select v-if="!isEditing" v-model="item.value" @update:model-value="(value) => {
                                                     const servico = props.servicos?.find(p => p.value.toString() === value);
+                                                    if (servico) {
+                                                        item.label = servico.label;
+                                                        item.descricao = servico.descricao;
+                                                    }
+                                                } ">
+                                                    <SelectTrigger>
+                                                        <SelectValue placeholder="Selecione..." />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        <SelectItem
+                                                            v-for="servico in props.servicos"
+                                                            :key="servico.value"
+                                                            :value="servico.value.toString()">
+                                                            {{ servico.label }} - {{ servico.descricao }}
+                                                        </SelectItem>
+                                                    </SelectContent>
+                                                </Select>
+
+
+
+                                                <Select v-else v-model="item.value" @update:model-value="(value) => {
+                                                    const servico = props.id_servicoEdit?.find(p => p.value.toString() === value);
                                                     if (servico) {
                                                         item.label = servico.label;
                                                         item.descricao = servico.descricao;
@@ -342,7 +374,7 @@ import {
                                                     </SelectTrigger>
                                                     <SelectContent>
                                                         <SelectItem
-                                                            v-for="servico in props.servicos"
+                                                            v-for="servico in props.id_servicoEdit"
                                                             :key="servico.value"
                                                             :value="servico.value.toString()">
                                                             {{ servico.label }} - {{ servico.descricao }}
@@ -367,7 +399,7 @@ import {
                         </div>
                         <div>
                             <Label for="status">Status</Label>
-                            <RadioGroup default-value="option-one" v-model="form.status">
+                            <RadioGroup default-value="option-one" v-model="form.status" :required="true">
                                 <div class="flex items-center space-x-2">
                                     <RadioGroupItem id="option-one" value="1" />
                                     <Label for="option-one">Em Aberto</Label>

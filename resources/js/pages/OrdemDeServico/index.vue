@@ -135,6 +135,7 @@ const canGoNext = computed(() => currentPage.value < lastPage.value);
                 <Table>
                     <TableHeader>
                         <TableRow>
+                            <TableHead class="cursor-pointer" @click="toggleSort('id')">ID Ordem de Serviço<span v-if="sortColumn === 'id'" class="ml-2">{{ sortDirection === 'asc' ? '↑' : '↓' }}</span></TableHead>
                             <TableHead class="cursor-pointer" @click="toggleSort('id_cliente')">Cliente<span v-if="sortColumn === 'id_cliente'" class="ml-2">{{ sortDirection === 'asc' ? '↑' : '↓' }}</span></TableHead>
                             <TableHead class="cursor-pointer" @click="toggleSort('id_veiculo')">Veículo<span v-if="sortColumn === 'id_veiculo'" class="ml-2">{{ sortDirection === 'asc' ? '↑' : '↓' }}</span></TableHead>
                             <TableHead class="cursor-pointer" @click="toggleSort('data_de_entrada')">Data de Entrada<span v-if="sortColumn === 'data_de_entrada'" class="ml-2">{{ sortDirection === 'asc' ? '↑' : '↓' }}</span></TableHead>
@@ -147,6 +148,7 @@ const canGoNext = computed(() => currentPage.value < lastPage.value);
                     </TableHeader>
                     <TableBody>
                         <TableRow v-for="(item, index) in paginatedItens" :key="index">
+                            <TableCell>{{ item.id}}</TableCell>
                             <TableCell>{{ item.cliente.nome }}</TableCell>
                             <TableCell>{{ item.veiculo.modelo }}</TableCell>
                             <TableCell>{{ item.data_de_entrada }}</TableCell>

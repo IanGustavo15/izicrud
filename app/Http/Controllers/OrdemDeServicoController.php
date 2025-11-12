@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\OrdemDeServico;
 use App\Models\Servico;
 use App\Models\Veiculo;
+use App\Models\Cliente;
 use Illuminate\Http\Request;
 use App\Models\ServicoOrdemDeServico;
 
@@ -14,6 +15,7 @@ class OrdemDeServicoController extends Controller
     {
         $items = OrdemDeServico::where('deleted', 0)->with('cliente')->with('veiculo')->orderBy('id', 'desc')->paginate(9);
         $allItems = OrdemDeServico::where('deleted', 0)->with('cliente')->with('veiculo')->orderBy('id', 'desc')->get();
+        // dd($items);
 
         return inertia('OrdemDeServico/index', [
             'itens' => $items,
@@ -72,7 +74,7 @@ class OrdemDeServicoController extends Controller
             'id_veiculo' => 'required|integer',
             'data_de_entrada' => 'required|date',
             'data_de_saida' => 'required|date',
-            'status' => 'required|integer|max:4',
+            'status' => 'required|integer|min:1|max:4', // Isso impede que o status não seja obrigatório
             'valor_total' => 'required|numeric',
             'observacao' => 'required|string',
         ]);
@@ -90,7 +92,7 @@ class OrdemDeServicoController extends Controller
                 ]
             );
         }
-
+        // dd($request->servicos);
 
         return redirect()->route('ordemdeservico.index')->with('success', 'Ordem de Serviço criada com sucesso.');
     }
@@ -100,6 +102,7 @@ class OrdemDeServicoController extends Controller
         if ($ordemdeservico->deleted) {
             return redirect()->route('ordemdeservico.index')->with('error', 'Ordem de Serviço excluída.');
         }
+        // dd($ordemdeservico);
 
         $id_clienteOptions = \App\Models\Cliente::where('deleted', 0)->orderBy('id', 'desc')->get()->map(function ($item) {
                 return [
@@ -114,16 +117,32 @@ class OrdemDeServicoController extends Controller
                 ];
             });
 
+            $servicos = Servico::where('deleted', 0)->orderBy('id', 'desc')->get()->map(function ($item) {
+                return [
+                    'value' => $item->id,
+                    'label' => $item->nome,
+                    'descricao' => $item->descricao, // TODO: Ajustar o campo 'nome' conforme o modelo relacionado
+                ];
+            });
 
+            $id_servicoEdit = \App\Models\ServicoOrdemDeServico::where('deleted', 0)->where('id_ordemdeservico', $ordemdeservico->id)->with('servico')->orderBy('id', 'desc')->get()->map(function ($item) {
+                return [
+                    'value' => $item->id,
+                    'label' => $item->servico->nome,
+                    'descricao' => $item->servico->descricao, // TODO: Ajustar o campo 'nome' conforme o modelo relacionado
+                ];
+            });
 
-
-
+            // dd($id_servicoEdit);
+            // dd($servicos);
 
         return inertia('OrdemDeServico/create', [
             'item' => $ordemdeservico->toArray(),
             'sidebarNavItems' => $this->getSidebarNavItems()
             ,'id_clienteOptions' => $id_clienteOptions
             ,'id_veiculoOptions' => $id_veiculoOptions
+            , 'servicos' => $servicos
+            , '$id_servicoEdit' => $id_servicoEdit
 
 
 
@@ -140,12 +159,29 @@ class OrdemDeServicoController extends Controller
             'id_veiculo' => 'required|integer',
             'data_de_entrada' => 'required|date',
             'data_de_saida' => 'required|date',
-            'status' => 'required|integer|max:4',
+            'status' => 'required|integer|min:1|max:4', // Isso impede que o status não seja obrigatório
             'valor_total' => 'required|numeric',
             'observacao' => 'required|string',
         ]);
 
         $ordemdeservico->update($request->all());
+        $os = $ordemdeservico;
+
+        // dd($ordemdeservico);
+        // dd($os);
+
+
+        foreach ($request->servicos as $servico) {
+            ServicoOrdemDeServico::update([
+                'id_ordemdeservico' => $os->id,
+                'id_servico' => $servico['value'],
+                'quantidade' => 0,
+                'preco_unitario' => 0,
+
+                ]
+            );
+        }
+            // dd($request->servicos);
 
         return redirect()->route('ordemdeservico.index')->with('success', 'Ordem de Serviço atualizada com sucesso.');
     }
@@ -162,6 +198,7 @@ class OrdemDeServicoController extends Controller
         return [
             ['title' => 'Todos as Ordens de Serviço', 'href' => '/ordemdeservico'],
             ['title' => 'Criar Nova Ordem de Serviço', 'href' => '/ordemdeservico/create'],
+            ['title' => '-----------------------------', 'href' => '/ordemdeservico'],
             ['title' => 'Adicionar Novo Cliente', 'href' => '/cliente/create'],
             ['title' => 'Adicionar Novo Veículo', 'href' => '/veiculo/create'],
         ];
