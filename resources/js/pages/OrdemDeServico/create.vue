@@ -155,7 +155,7 @@ import {
             label: string,
             descricao: string,
         }>,
-        id_servicoEdit: props.id_servicoEdit as Array <{
+        id_servicoEdit: props.servicos as Array <{
             value: number,
             label: string,
             descricao: string,

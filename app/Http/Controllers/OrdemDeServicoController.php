@@ -45,11 +45,12 @@ class OrdemDeServicoController extends Controller
                 return [
                     'value' => $item->id,
                     'label' => $item->nome,
-                    'descricao' => $item->descricao, // TODO: Ajustar o campo 'nome' conforme o modelo relacionado
+                    'descricao' => $item->descricao,
+                    'tempo' => $item->tempo_estimado,
                 ];
             });
 
-
+            // dd($servicos);
 
 
         return inertia('OrdemDeServico/create', [
@@ -92,6 +93,7 @@ class OrdemDeServicoController extends Controller
                 ]
             );
         }
+        // dd($os);
         // dd($request->servicos);
 
         return redirect()->route('ordemdeservico.index')->with('success', 'Ordem de Serviço criada com sucesso.');
@@ -127,9 +129,11 @@ class OrdemDeServicoController extends Controller
 
             $id_servicoEdit = \App\Models\ServicoOrdemDeServico::where('deleted', 0)->where('id_ordemdeservico', $ordemdeservico->id)->with('servico')->orderBy('id', 'desc')->get()->map(function ($item) {
                 return [
-                    'value' => $item->id,
+                    'value' => $item->servico->id,
                     'label' => $item->servico->nome,
-                    'descricao' => $item->servico->descricao, // TODO: Ajustar o campo 'nome' conforme o modelo relacionado
+                    'descricao' => $item->servico->descricao,
+                    'quantidade' => $item->quantidade,
+                    'preco_unitario' => $item->preco_unitario,
                 ];
             });
 
