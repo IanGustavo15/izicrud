@@ -13,7 +13,8 @@
     } from '@/components/ui/alert';
     import {
         ref,
-        watch
+        watch,
+        onMounted,
     } from 'vue';
     import {
         FormField,
@@ -155,7 +156,7 @@ import {
             label: string,
             descricao: string,
         }>,
-        id_servicoEdit: props.servicos as Array <{
+        id_servicoEdit: [] as Array <{
             value: number,
             label: string,
             descricao: string,
@@ -229,6 +230,14 @@ import {
     }, {
         immediate: true
     });
+
+    onMounted(
+        () => {
+            if (isEditing.value && props.id_servicoEdit) {
+                form.servicos = props.id_servicoEdit
+            }
+        }
+    );
 </script>
 
 <template>
@@ -363,18 +372,19 @@ import {
 
 
                                                 <Select v-else v-model="item.value" @update:model-value="(value) => {
-                                                    const servico = props.id_servicoEdit?.find(p => p.value.toString() === value);
+                                                    const servico = props.servicos?.find(s => s.value.toString() === value);
                                                     if (servico) {
                                                         item.label = servico.label;
                                                         item.descricao = servico.descricao;
                                                     }
                                                 }">
                                                     <SelectTrigger>
-                                                        <SelectValue placeholder="Selecione..." />
+                                                        <SelectValue v-if="item.value" :placeholder="item.label + ' - ' + item.descricao"  />
+                                                        <SelectValue v-else placeholder="Selecione..." />
                                                     </SelectTrigger>
                                                     <SelectContent>
                                                         <SelectItem
-                                                            v-for="servico in props.id_servicoEdit"
+                                                            v-for="servico in props.servicos"
                                                             :key="servico.value"
                                                             :value="servico.value.toString()">
                                                             {{ servico.label }} - {{ servico.descricao }}
@@ -382,7 +392,6 @@ import {
                                                     </SelectContent>
                                                 </Select>
                                             </div>
-
 
                                         </div>
                                     </div>

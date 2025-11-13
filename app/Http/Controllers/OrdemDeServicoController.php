@@ -146,7 +146,7 @@ class OrdemDeServicoController extends Controller
             ,'id_clienteOptions' => $id_clienteOptions
             ,'id_veiculoOptions' => $id_veiculoOptions
             , 'servicos' => $servicos
-            , '$id_servicoEdit' => $id_servicoEdit
+            , 'id_servicoEdit' => $id_servicoEdit
 
 
 
@@ -166,26 +166,33 @@ class OrdemDeServicoController extends Controller
             'status' => 'required|integer|min:1|max:4', // Isso impede que o status não seja obrigatório
             'valor_total' => 'required|numeric',
             'observacao' => 'required|string',
+            'servicos' => 'present|array',
         ]);
 
-        $ordemdeservico->update($request->all());
-        $os = $ordemdeservico;
+        $ordemdeservico->update($request->except('servicos'));
+        $servicosDoFormulario = $request->input('servicos', []);
+        $idsDosServicosDoFormulario = collect($servicosDoFormulario)->pluck('value')->filter();
+        ServicoOrdemDeServico::where('id_ordemdeservico', $ordemdeservico->id)->whereNotIn('id_servico', $idsDosServicosDoFormulario)->delete();
 
         // dd($ordemdeservico);
         // dd($os);
 
-
-        foreach ($request->servicos as $servico) {
-            ServicoOrdemDeServico::update([
-                'id_ordemdeservico' => $os->id,
-                'id_servico' => $servico['value'],
-                'quantidade' => 0,
-                'preco_unitario' => 0,
-
-                ]
-            );
+        // dd($request->servicos);
+        if ($request->has('servicos')) {
+            foreach ($request->servicos as $servico) {
+                if (isset($servico['value']) && $servico['value'] > 0) {
+                    ServicoOrdemDeServico::updateOrCreate([
+                        'id_ordemdeservico' => $ordemdeservico->id,
+                        'id_servico' => $servico['value'],
+                    ],
+                    [
+                        'quantidade' => 0,
+                        'preco_unitario' => 0,
+                    ]
+                );
+                }
+            }
         }
-            // dd($request->servicos);
 
         return redirect()->route('ordemdeservico.index')->with('success', 'Ordem de Serviço atualizada com sucesso.');
     }
