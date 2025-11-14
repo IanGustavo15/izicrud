@@ -135,6 +135,7 @@ const canGoNext = computed(() => currentPage.value < lastPage.value);
                 <Table>
                     <TableHeader>
                         <TableRow>
+                            <TableHead class="cursor-pointer" @click="toggleSort('id_servico')">ID Serviço<span v-if="sortColumn === 'id_servico'" class="ml-2">{{ sortDirection === 'asc' ? '↑' : '↓' }}</span></TableHead>
                             <TableHead class="cursor-pointer" @click="toggleSort('id_servico')">Serviço<span v-if="sortColumn === 'id_servico'" class="ml-2">{{ sortDirection === 'asc' ? '↑' : '↓' }}</span></TableHead>
                             <TableHead class="cursor-pointer" @click="toggleSort('id_peca')">Peça<span v-if="sortColumn === 'id_peca'" class="ml-2">{{ sortDirection === 'asc' ? '↑' : '↓' }}</span></TableHead>
                             <TableHead class="cursor-pointer" @click="toggleSort('quantidade_peca')">Quantidade<span v-if="sortColumn === 'quantidade_peca'" class="ml-2">{{ sortDirection === 'asc' ? '↑' : '↓' }}</span></TableHead>
@@ -143,6 +144,7 @@ const canGoNext = computed(() => currentPage.value < lastPage.value);
                     </TableHeader>
                     <TableBody>
                         <TableRow v-for="(item, index) in paginatedItens" :key="index">
+                            <TableCell>{{ item.id_servico }}</TableCell>
                             <TableCell>{{ item.servico.nome }} - {{ item.servico.descricao }}</TableCell>
                             <TableCell>{{ item.peca.descricao }}</TableCell>
                             <TableCell>{{ item.quantidade_peca }}</TableCell>

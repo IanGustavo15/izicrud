@@ -101,10 +101,18 @@ interface Peca{
 
 };
 
+interface PecaServico{
+    value: number;
+    label: string;
+    preco_de_venda: number;
+    quantidade: number;
+};
+
 const props = defineProps<{
     item?: { id: number; nome: string; descricao: string; preco_mao_de_obra: number; tempo_estimado: number };
     sidebarNavItems: { title: string; href: string }[];
     pecas: Peca [];
+    pecasEdit: PecaServico [];
 
 
 
@@ -136,11 +144,17 @@ const form = useForm({
     preco_mao_de_obra: props.item?.preco_mao_de_obra.toString() || 0,
     tempo_estimado: props.item?.tempo_estimado.toString() || 0,
     pecas: [] as Array <{
-            value: number;
-            label: string;
-            preco_de_venda: number;
-            quantidade: number;
+            value: number,
+            label: string,
+            preco_de_venda: number,
+            quantidade: number,
         }>,
+    pecasEdit: [] as Array<{
+        value: number,
+        label: string,
+        preco_de_venda: number,
+        quantidade: number,
+    }>,
 });
 
 const formErrors = ref<Record<string, string[]>>({});
@@ -180,6 +194,14 @@ function submitForm() {
         });
     }
 }
+
+onMounted(
+        () => {
+            if (isEditing.value && props.pecasEdit) {
+                form.pecas = props.pecasEdit
+            }
+        }
+    );
 </script>
 
 <template>
@@ -274,26 +296,26 @@ function submitForm() {
 
 
 
-                                                <!-- <Select v-else v-model="item.value" @update:model-value="(value) => {
-                                                    const servico = props.servicos?.find(s => s.value.toString() === value);
-                                                    if (servico) {
-                                                        item.label = servico.label;
-                                                        item.descricao = servico.descricao;
+                                                <Select v-else v-model="item.value" @update:model-value="(value) => {
+                                                    const peca = props.pecas?.find(s => s.value.toString() === value);
+                                                    if (peca) {
+                                                        item.label = peca.label;
+                                                        item.quantidade = peca.quantidade;
                                                     }
                                                 }">
                                                     <SelectTrigger>
-                                                        <SelectValue v-if="item.value" :placeholder="item.label + ' - ' + item.descricao"  />
+                                                        <SelectValue v-if="item.value" :placeholder="item.label + ' // Quantidade: ' + item.quantidade"  />
                                                         <SelectValue v-else placeholder="Selecione..." />
                                                     </SelectTrigger>
                                                     <SelectContent>
                                                         <SelectItem
-                                                            v-for="servico in props.servicos"
-                                                            :key="servico.value"
-                                                            :value="servico.value.toString()">
-                                                            {{ servico.label }} - {{ servico.descricao }}
+                                                            v-for="peca in props.pecas"
+                                                            :key="peca.value"
+                                                            :value="peca.value.toString()">
+                                                            {{ peca.label }} // Quantidade: {{ peca.quantidade }}
                                                         </SelectItem>
                                                     </SelectContent>
-                                                </Select> -->
+                                                </Select>
                                             </div>
 
                                         </div>
