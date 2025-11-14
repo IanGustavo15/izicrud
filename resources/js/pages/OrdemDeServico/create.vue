@@ -212,7 +212,7 @@ import {
     const listaVeiculosDono = ref < Veiculo[] > ([]);
     const isLoadingVeiculo = ref(false);
 
-    async function fetchVeiculos(id_cliente: number | null) {
+    async function getVeiculoPorCliente(id_cliente: number | null) {
         if (!id_cliente) {
             listaVeiculosDono.value = [];
             return;
@@ -226,7 +226,7 @@ import {
     }
 
     watch(() => form.id_cliente, (id) => {
-        fetchVeiculos(id);
+        getVeiculoPorCliente(id);
     }, {
         immediate: true
     });
