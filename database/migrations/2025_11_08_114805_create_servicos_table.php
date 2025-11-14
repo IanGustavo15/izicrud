@@ -17,6 +17,26 @@ return new class extends Migration
             $table->boolean('deleted')->default(false);
             $table->timestamps();
         });
+
+        DB::table('servicos')->insert([
+            'nome' => 'Troca de óleo',
+            'descricao' => 'Óleo + filtro',
+            'preco_mao_de_obra' => '10',
+            'tempo_estimado' => '30',
+            'deleted' => 0,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        DB::table('servicos')->insert([
+            'nome' => 'Troca de pneu',
+            'descricao' => 'Pneu + algo',
+            'preco_mao_de_obra' => '20',
+            'tempo_estimado' => '60',
+            'deleted' => 0,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
     }
 
     public function down(): void
