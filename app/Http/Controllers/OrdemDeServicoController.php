@@ -42,7 +42,7 @@ class OrdemDeServicoController extends Controller
                 ];
             });
 
-            $servicos = Servico::where('deleted', 0)->orderBy('id', 'desc')->get()->map(function ($item) {
+        $servicos = Servico::where('deleted', 0)->orderBy('id', 'desc')->get()->map(function ($item) {
                 return [
                     'value' => $item->id,
                     'label' => $item->nome,

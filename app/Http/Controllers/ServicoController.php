@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\Servico;
+use App\Models\Peca;
 use Illuminate\Http\Request;
+use App\Models\PecaServico;
 
 class ServicoController extends Controller
 {
@@ -25,12 +27,21 @@ class ServicoController extends Controller
     {
 
 
+        $pecas = Peca::where('deleted', 0)->orderBy('id', 'desc')->get()->map(function ($item) {
+                return [
+                    'value' => $item->id,
+                    'label' => $item->descricao,
+                    'preco_de_venda' => $item->preco_de_venda,
+                    'quantidade' => $item->quantidade,
+                ];
+            });
+            // dd($pecas);
 
 
 
         return inertia('Servico/create', [
-            'sidebarNavItems' => $this->getSidebarNavItems()
-
+            'sidebarNavItems' => $this->getSidebarNavItems(),
+            'pecas' => $pecas,
 
 
 
@@ -47,7 +58,24 @@ class ServicoController extends Controller
             'tempo_estimado' => 'required|integer',
         ]);
 
-        Servico::create($request->all());
+        $serv = Servico::create($request->all());
+
+
+        if ($request->has('pecas')) {
+            foreach ($request->pecas as $peca) {
+            PecaServico::create([
+
+                'id_servico' => $serv->id,
+                'id_peca' => $peca['value'],
+                'quantidade_peca' => 0,
+                ]
+            );
+        }
+        }
+
+
+        // dd($serv);
+        // dd($request->pecas);
 
         return redirect()->route('servico.index')->with('success', 'Serviço criado com sucesso.');
     }

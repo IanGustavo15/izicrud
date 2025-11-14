@@ -1,17 +1,90 @@
 <script setup lang="ts">
-import AppLayout from '@/layouts/AppLayout.vue';
-import { type BreadcrumbItem } from '@/types';
-import { Head } from '@inertiajs/vue3';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { ref } from 'vue';
-import { FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Button } from '@/components/ui/button';
-import { useForm } from '@inertiajs/vue3';
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem, SelectGroup, SelectLabel } from '@/components/ui/select';
-import { Label } from '@/components/ui/label';
-import { Checkbox } from '@/components/ui/checkbox';
+    import AppLayout from '@/layouts/AppLayout.vue';
+    import {
+        type BreadcrumbItem
+    } from '@/types';
+    import {
+        Head
+    } from '@inertiajs/vue3';
+    import {
+        Alert,
+        AlertDescription,
+        AlertTitle
+    } from '@/components/ui/alert';
+    import {
+        ref,
+        watch,
+        onMounted,
+    } from 'vue';
+    import {
+        FormField,
+        FormItem,
+        FormLabel,
+        FormMessage
+    } from '@/components/ui/form';
+    import {
+        Input
+    } from '@/components/ui/input';
+    import {
+        Textarea
+    } from '@/components/ui/textarea';
+    import {
+        Button
+    } from '@/components/ui/button';
+    import {
+        useForm
+    } from '@inertiajs/vue3';
+    import {
+        Select,
+        SelectTrigger,
+        SelectValue,
+        SelectContent,
+        SelectItem,
+        SelectGroup,
+        SelectLabel
+    } from '@/components/ui/select';
+    import {
+        Label
+    } from '@/components/ui/label';
+    import {
+        Checkbox
+    } from '@/components/ui/checkbox';
+    import {
+        disable
+    } from '@/routes/two-factor';
+    import axios from 'axios';
+    import {
+        RadioGroup,
+        RadioGroupItem
+    } from '@/components/ui/radio-group';
+    import {
+        Footprints,
+        Wrench
+    } from 'lucide-vue-next';
+    import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { index } from '@/routes/cliente';
+import {
+    ArrowLeft,
+    Save,
+    ShoppingCart,
+    Plus,
+    Minus,
+    Calculator,
+    Truck,
+    Calendar,
+    FileText,
+    DollarSign,
+    Package,
+    Trash2,
+    Search
+} from 'lucide-vue-next';
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Servicos', href: '/servico' },
@@ -20,14 +93,36 @@ const breadcrumbs: BreadcrumbItem[] = [
 const headerTitle = 'Serviços';
 const headerDescription = 'Gerencie seus serviços aqui.';
 
+interface Peca{
+    value: number;
+    label: string;
+    preco_de_venda: number;
+    quantidade: number;
+
+};
+
 const props = defineProps<{
     item?: { id: number; nome: string; descricao: string; preco_mao_de_obra: number; tempo_estimado: number };
     sidebarNavItems: { title: string; href: string }[];
+    pecas: Peca [];
 
 
 
 
 }>();
+
+const addItem = () => {
+        form.pecas.push({
+            value: 0,
+            label: '',
+            preco_de_venda: 0,
+            quantidade: 0,
+        })
+    };
+
+    const removeItem = (index:number) => {
+        form.pecas.splice(index, 1);
+    };
 
 const isEditing = ref(!!props.item);
 
@@ -39,7 +134,13 @@ const form = useForm({
     nome: props.item?.nome.toString() || '',
     descricao: props.item?.descricao.toString() || '',
     preco_mao_de_obra: props.item?.preco_mao_de_obra.toString() || 0,
-    tempo_estimado: props.item?.tempo_estimado.toString() || 0
+    tempo_estimado: props.item?.tempo_estimado.toString() || 0,
+    pecas: [] as Array <{
+            value: number;
+            label: string;
+            preco_de_venda: number;
+            quantidade: number;
+        }>,
 });
 
 const formErrors = ref<Record<string, string[]>>({});
@@ -109,6 +210,97 @@ function submitForm() {
                     <Label for="descricao">Descrição</Label>
                     <Input id="descricao" v-model="form.descricao" type="text" placeholder="Digite Descrição" />
                 </div>
+                <Card>
+                            <CardHeader>
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <CardDescription>
+                                            Adicione as peças
+                                        </CardDescription>
+                                    </div>
+                                    <Button type="button" @click="addItem">
+                                        <Plus class="my-2 h-4 w-4" />
+                                        Adicionar Peça
+                                    </Button>
+                                </div>
+                            </CardHeader>
+                            <CardContent>
+                                <div v-if="form.pecas.length === 0"
+                                     class="text-center py-12 text-muted-foreground">
+                                    <Wrench class="mx-auto h-12 w-12 mb-3 opacity-50" />
+                                    <p>Nenhuma peça adicionada</p>
+                                    <p class="text-sm">Clique em "Adicionar Peças" se o Serviço precisar de Peças</p>
+                                </div>
+
+                                <div v-else class="space-y-4">
+                                    <div v-for="(item, index) in form.pecas"
+                                         :key="index"
+                                         class="p-4 border rounded-lg space-y-4">
+
+                                        <div class="flex items-center justify-between">
+                                            <h4 class="font-medium">Peça {{ index + 1 }}</h4>
+                                            <Button
+                                                type="button"
+                                                @click="removeItem(index)"
+                                                variant="outline"
+                                                size="sm"
+                                            >
+                                                <Trash2 class="h-4 w-4" />
+                                            </Button>
+                                        </div>
+
+                                        <div class="grid gap-3 sm:grid-cols-6">
+                                            <div class="sm:col-span-2">
+                                                <Label class="text-xs py-1">Peça</Label>
+                                                <Select v-if="!isEditing" v-model="item.value" @update:model-value="(value) => {
+                                                    const peca = props.pecas?.find(p => p.value.toString() === value);
+                                                    if (peca) {
+                                                        item.label = peca.label;
+                                                        item.quantidade = peca.quantidade;
+                                                    }
+                                                } ">
+                                                    <SelectTrigger>
+                                                        <SelectValue placeholder="Selecione..." />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        <SelectItem
+                                                            v-for="peca in props.pecas"
+                                                            :key="peca.value"
+                                                            :value="peca.value.toString()">
+                                                            {{ peca.label }} // Quantidade: {{ peca.quantidade }}
+                                                        </SelectItem>
+                                                    </SelectContent>
+                                                </Select>
+
+
+
+                                                <!-- <Select v-else v-model="item.value" @update:model-value="(value) => {
+                                                    const servico = props.servicos?.find(s => s.value.toString() === value);
+                                                    if (servico) {
+                                                        item.label = servico.label;
+                                                        item.descricao = servico.descricao;
+                                                    }
+                                                }">
+                                                    <SelectTrigger>
+                                                        <SelectValue v-if="item.value" :placeholder="item.label + ' - ' + item.descricao"  />
+                                                        <SelectValue v-else placeholder="Selecione..." />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        <SelectItem
+                                                            v-for="servico in props.servicos"
+                                                            :key="servico.value"
+                                                            :value="servico.value.toString()">
+                                                            {{ servico.label }} - {{ servico.descricao }}
+                                                        </SelectItem>
+                                                    </SelectContent>
+                                                </Select> -->
+                                            </div>
+
+                                        </div>
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
                 <div>
                     <Label for="preco_mao_de_obra">Preço da Mão de Obra (R$)</Label>
                     <Input id="preco_mao_de_obra" v-model.number="form.preco_mao_de_obra" type="number" step="0.01" placeholder="Digite Preço da Mão de Obra" />

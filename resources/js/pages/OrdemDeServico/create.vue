@@ -98,7 +98,7 @@ import {
     interface Servico{
             value: number;label: string; descricao: string;
         };
-        interface ServicoOrdemDeServico{
+    interface ServicoOrdemDeServico{
             value: number;label: string; descricao: string;
         };
 
