@@ -7,6 +7,7 @@ use App\Models\Servico;
 use App\Models\Veiculo;
 use App\Models\Cliente;
 use App\Models\Peca;
+use App\Models\PecaServico;
 use Illuminate\Http\Request;
 use App\Models\ServicoOrdemDeServico;
 
@@ -41,7 +42,6 @@ class OrdemDeServicoController extends Controller
                     'label' => $item->modelo // TODO: Ajustar o campo 'nome' conforme o modelo relacionado
                 ];
             });
-
         $servicos = Servico::where('deleted', 0)->orderBy('id', 'desc')->get()->map(function ($item) {
                 return [
                     'value' => $item->id,
@@ -50,19 +50,34 @@ class OrdemDeServicoController extends Controller
                     'tempo' => $item->tempo_estimado,
                 ];
             });
+        // $pecaServico = PecaServico::where('deleted', 0)->with('peca')->orderBy('id', 'desc')->get()->map(function ($item) {
+        //         return [
+        //             'value' => $item->id,
+        //             'id_servico' => $item->id_servico,
+        //             'id_peca' => $item->id_peca,
+        //             'quantidade' => $item->peca->quantidade,
+        //         ];
+        //     });
+
+        $pecaServico = PecaServico::where('deleted', 0)->orderBy('id', 'desc')->get()->map(function ($item) {
+                return [
+                    'value' => $item->id,
+                    'id_servico' => $item->id_servico,
+                    'id_peca' => $item->id_peca,
+                    'quantidade' => $item->quantidade_peca,
+                ];
+            });
 
             // dd($servicos);
+            // dd($pecaServico);
 
 
         return inertia('OrdemDeServico/create', [
             'sidebarNavItems' => $this->getSidebarNavItems()
             ,'id_clienteOptions' => $id_clienteOptions
             ,'id_veiculoOptions' => $id_veiculoOptions
-            , 'servicos' => $servicos
-
-
-
-
+            ,'servicos' => $servicos
+            , 'pecaServico' => $pecaServico
 
         ]);
     }
@@ -94,8 +109,10 @@ class OrdemDeServicoController extends Controller
                 ]
             );
         }
+
+
         // dd($os);
-        // dd($request->servicos);
+        // dd($request);
 
         return redirect()->route('ordemdeservico.index')->with('success', 'Ordem de Serviço criada com sucesso.');
     }
@@ -107,13 +124,13 @@ class OrdemDeServicoController extends Controller
         }
         // dd($ordemdeservico);
 
-        $id_clienteOptions = \App\Models\Cliente::where('deleted', 0)->orderBy('id', 'desc')->get()->map(function ($item) {
+        $id_clienteOptions = Cliente::where('deleted', 0)->orderBy('id', 'desc')->get()->map(function ($item) {
                 return [
                     'value' => $item->id,
                     'label' => $item->nome // TODO: Ajustar o campo 'nome' conforme o modelo relacionado
                 ];
             });
-        $id_veiculoOptions = \App\Models\Veiculo::where('deleted', 0)->orderBy('id', 'desc')->get()->map(function ($item) {
+        $id_veiculoOptions = Veiculo::where('deleted', 0)->orderBy('id', 'desc')->get()->map(function ($item) {
                 return [
                     'value' => $item->id,
                     'label' => $item->modelo // TODO: Ajustar o campo 'nome' conforme o modelo relacionado
@@ -128,7 +145,7 @@ class OrdemDeServicoController extends Controller
                 ];
             });
 
-            $id_servicoEdit = \App\Models\ServicoOrdemDeServico::where('deleted', 0)->where('id_ordemdeservico', $ordemdeservico->id)->with('servico')->orderBy('id', 'desc')->get()->map(function ($item) {
+            $id_servicoEdit = ServicoOrdemDeServico::where('deleted', 0)->where('id_ordemdeservico', $ordemdeservico->id)->with('servico')->orderBy('id', 'desc')->get()->map(function ($item) {
                 return [
                     'value' => $item->servico->id,
                     'label' => $item->servico->nome,
@@ -225,5 +242,23 @@ class OrdemDeServicoController extends Controller
                 ];
             });
         return $veiculo;
+    }
+
+
+    public function finalizarOrdem($id)
+    {
+        $fimOrdem = OrdemDeServico::find($id);
+
+        if ($fimOrdem->status == 3) {
+            return redirect()->route('ordemdeservico.index')->with('success', 'Essa Ordem de Serviço já está finalizada.');
+        }
+        if ($fimOrdem->status != 3)  {
+            $fimOrdem->update([
+            'status' => 3,
+        ]);
+        return redirect()->route('ordemdeservico.index')->with('success', 'Ordem de Serviço finalizada com sucesso!');
+        }
+        // dd($id);
+        // dd($fimOrdem);
     }
 }

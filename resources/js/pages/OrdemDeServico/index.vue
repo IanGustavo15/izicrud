@@ -36,8 +36,10 @@ const showAlertState = ref(false);
 const searchQuery = ref('');
 const alertMessage = ref('');
 const alertVariant = ref<'success' | 'warning' | 'destructive'>('success');
-const showDeleteDialog = ref(false);
 const itemToDelete = ref<number | null>(null);
+const showDeleteDialog = ref(false);
+const itemParaFinalizar = ref<number | null>(null);
+const showFinalizadoDialog = ref(false);
 
 const sortColumn = ref<string | null>(null);
 const sortDirection = ref<'asc' | 'desc'>('asc');
@@ -91,6 +93,26 @@ function confirmDelete(itemId: number): void {
     showDeleteDialog.value = true;
 }
 
+function confirmFinalizarOrdem(itemId: number): void{
+    itemParaFinalizar.value = itemId;
+    showFinalizadoDialog.value = true;
+}
+
+function finalizarOrdem() {
+    if (itemParaFinalizar.value !== null) {
+        router.put(`/ordemdeservico/finalizarOrdem/${itemParaFinalizar.value}`, {status: 3}, {
+            onSuccess: () => {
+                showAlert('Ordem de Serviço finalizada com sucesso!', 'success');
+                showFinalizadoDialog.value = false;
+                itemParaFinalizar.value = null;
+            },
+            onError: () => {
+                showAlert('Erro ao finalizar a Ordem de Serviço.', 'destructive');
+                showFinalizadoDialog.value = false;
+            },
+        });
+    }
+}
 function deleteItem(): void {
     if (itemToDelete.value !== null) {
         router.delete(`/ordemdeservico/${itemToDelete.value}`, {
@@ -165,6 +187,15 @@ const canGoNext = computed(() => currentPage.value < lastPage.value);
                             <TableCell>
                                 <ul class="flex flex-row gap-4">
                                     <li>
+                                        <Button variant="link" class="text-green-500 hover:text-green-700 dark:text-green-400 dark:hover:text-green-300 ring-1 ring-red-500/20" @click="confirmFinalizarOrdem(item.id)">
+                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+                                            </svg>
+
+                                            Finalizar
+                                        </Button>
+                                    </li>
+                                    <li>
                                         <Button variant="link" @click="router.visit(`/ordemdeservico/${item.id}/edit`)" class="text-blue-500 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 ring-1 ring-blue-500/20">
                                             <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 stroke-current">
                                                 <path d="M9 5H7C5.89543 5 5 5.89543 5 7V19C5 20.1046 5.89543 21 7 21H9M15 5H17C18.1046 5 19 5.89543 19 7V9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
@@ -205,6 +236,21 @@ const canGoNext = computed(() => currentPage.value < lastPage.value);
                     </div>
                 </div>
             </div>
+
+            <Dialog v-model:open="showFinalizadoDialog">
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Confirmar Finalização</DialogTitle>
+                        <DialogDescription>
+                            Tem certeza de que deseja finalizar esta Ordem de Serviço?
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter>
+                        <Button variant="outline" @click="showFinalizadoDialog = false">Cancelar</Button>
+                        <Button variant="default" @click="finalizarOrdem">Finalizar</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
 
             <Dialog v-model:open="showDeleteDialog">
                 <DialogContent>

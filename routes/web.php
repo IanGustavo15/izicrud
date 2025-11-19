@@ -73,6 +73,7 @@ Route::group([
         Route::delete('/ordemdeservico/{ordemdeservico}', 'destroy')->name('ordemdeservico.destroy');
 
         Route::get('/ordemdeservico/getVeiculoPorCliente/{id_cliente}', 'getVeiculoPorCliente')->name('ordemdeservico.getVeiculoPorCliente');
+        Route::put('/ordemdeservico/finalizarOrdem/{id}', 'finalizarOrdem')->name('ordemdeservico.finalizarOrdem');
     });
 });
 Route::group([

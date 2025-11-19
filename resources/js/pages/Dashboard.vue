@@ -4,9 +4,9 @@ import { dashboard } from '@/routes';
 import { type BreadcrumbItem } from '@/types';
 import { Head } from '@inertiajs/vue3';
 import PlaceholderPattern from '../components/PlaceholderPattern.vue';
-import type { ChartConfig } from '@/registry/new-york-v4/ui/chart';
 import { VisGroupedBar, VisXYContainer } from '@unovis/vue';
-import { ChartContainer } from '@/registry/new-york-v4/ui/chart';
+// import type { ChartConfig } from '@/registry/new-york-v4/ui/chart';
+// import { ChartContainer } from '@/registry/new-york-v4/ui/chart';
 
 const chartData = [
   { date: new Date('2024-01-01'), desktop: 186, mobile: 80 },

@@ -147,7 +147,7 @@ const canGoNext = computed(() => currentPage.value < lastPage.value);
                             <TableCell>{{ item.id_servico }}</TableCell>
                             <TableCell>{{ item.servico.nome }} - {{ item.servico.descricao }}</TableCell>
                             <TableCell>{{ item.peca.descricao }}</TableCell>
-                            <TableCell>{{ item.quantidade_peca }}</TableCell>
+                            <TableCell>{{ item.peca.quantidade }}</TableCell>
                             <TableCell>
                                 <ul class="flex flex-row gap-4">
                                     <li>
