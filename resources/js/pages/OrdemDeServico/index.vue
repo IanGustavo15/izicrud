@@ -212,36 +212,31 @@ const canGoNext = computed(() => currentPage.value < lastPage.value);
                             <TableCell>
                                 <ul class="flex flex-row gap-4">
                                     <li>
-                                        <Button variant="link" class="text-green-500 hover:text-green-700 dark:text-green-400 dark:hover:text-green-300 ring-1 ring-red-500/20" @click="confirmFinalizarOrdem(item.id)">
+                                        <Button :disabled="item.status == 3" title="Finalizar" variant="link" class="text-green-500 hover:text-green-700 dark:text-green-400 dark:hover:text-green-300 ring-1 ring-green-500/20 rounded-full" @click="confirmFinalizarOrdem(item.id)">
                                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
                                                 <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" />
                                             </svg>
+                                        </Button>
+                                    </li>
+                                        <li>
+                                        <Button :disabled="item.status == 4" title="Cancelar" variant="link" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 ring-1 ring-gray-500/20  rounded-full" @click="confirmCancelarOrdem(item.id)">
+                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+                                            </svg>
 
-                                            Finalizar
                                         </Button>
                                     </li>
                                     <li>
-                                        <Button variant="link" @click="router.visit(`/ordemdeservico/${item.id}/edit`)" class="text-blue-500 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 ring-1 ring-blue-500/20">
+                                        <Button variant="link" title="Editar" @click="router.visit(`/ordemdeservico/${item.id}/edit`)" class="text-blue-500 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 ring-1 ring-blue-500/20  rounded-full">
                                             <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 stroke-current">
                                                 <path d="M9 5H7C5.89543 5 5 5.89543 5 7V19C5 20.1046 5.89543 21 7 21H9M15 5H17C18.1046 5 19 5.89543 19 7V9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
                                                 <path d="M14.902 20.3343L12.7153 20.7716L13.1526 18.585C13.1914 18.3914 13.2865 18.2136 13.4261 18.074L17.5 14L19.5 12L21.4869 13.9869L19.4869 15.9869L15.413 20.0608C15.2734 20.2004 15.0956 20.2956 14.902 20.3343Z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
                                                 <path d="M9 5C9 3.89543 9.89543 3 11 3H13C14.1046 3 15 3.89543 15 5V7H9V5Z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
                                             </svg>
-                                            Editar
                                         </Button>
                                     </li>
                                     <li>
-                                        <Button variant="link" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 ring-1 ring-gray-500/20" @click="confirmCancelarOrdem(item.id)">
-                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
-                                                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
-                                            </svg>
-
-
-                                            Cancelar
-                                        </Button>
-                                    </li>
-                                    <li>
-                                        <Button variant="link" class="text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 ring-1 ring-red-500/20" @click="confirmDelete(item.id)">
+                                        <Button title="Excluir" variant="link" class="text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 ring-1 ring-red-500/20  rounded-full" @click="confirmDelete(item.id)">
                                             <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 stroke-current">
                                                 <path d="M10 12V17" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
                                                 <path d="M14 12V17" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
@@ -249,7 +244,6 @@ const canGoNext = computed(() => currentPage.value < lastPage.value);
                                                 <path d="M6 10V18C6 19.6569 7.34315 21 9 21H15C16.6569 21 18 19.6569 18 18V10" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
                                                 <path d="M9 5C9 3.89543 9.89543 3 11 3H13C14.1046 3 15 3.89543 15 5V7H9V5Z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
                                             </svg>
-                                            Excluir
                                         </Button>
                                     </li>
                                 </ul>
