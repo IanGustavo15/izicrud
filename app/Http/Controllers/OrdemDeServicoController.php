@@ -50,26 +50,10 @@ class OrdemDeServicoController extends Controller
                     'tempo' => $item->tempo_estimado,
                 ];
             });
-        // $pecaServico = PecaServico::where('deleted', 0)->with('peca')->orderBy('id', 'desc')->get()->map(function ($item) {
-        //         return [
-        //             'value' => $item->id,
-        //             'id_servico' => $item->id_servico,
-        //             'id_peca' => $item->id_peca,
-        //             'quantidade' => $item->peca->quantidade,
-        //         ];
-        //     });
 
-        $pecaServico = PecaServico::where('deleted', 0)->orderBy('id', 'desc')->get()->map(function ($item) {
-                return [
-                    'value' => $item->id,
-                    'id_servico' => $item->id_servico,
-                    'id_peca' => $item->id_peca,
-                    'quantidade' => $item->quantidade_peca,
-                ];
-            });
+            // dd($pecas);
 
             // dd($servicos);
-            // dd($pecaServico);
 
 
         return inertia('OrdemDeServico/create', [
@@ -77,7 +61,7 @@ class OrdemDeServicoController extends Controller
             ,'id_clienteOptions' => $id_clienteOptions
             ,'id_veiculoOptions' => $id_veiculoOptions
             ,'servicos' => $servicos
-            , 'pecaServico' => $pecaServico
+
 
         ]);
     }
@@ -106,13 +90,10 @@ class OrdemDeServicoController extends Controller
                 'quantidade' => 0,
                 'preco_unitario' => 0,
 
-                ]
-            );
+            ]);
         }
-
-
         // dd($os);
-        // dd($request);
+        // dd($request->servicos);
 
         return redirect()->route('ordemdeservico.index')->with('success', 'Ordem de Serviço criada com sucesso.');
     }
@@ -256,10 +237,16 @@ class OrdemDeServicoController extends Controller
             $fimOrdem->update([
             'status' => 3,
         ]);
+        $servicos = ServicoOrdemDeServico::where('deleted', 0)->where('id_ordemdeservico', $id)->get()->pluck('id_servico');
+        $pecasDoServico = PecaServico::where('deleted', 0)->whereIn('id_servico', $servicos)->get()->pluck('id_peca');
+        $pecas = Peca::whereIn('id', $pecasDoServico)->decrement('quantidade', 1);
+        // dd($pecasDoServico);
+        // dd($servicos);
+        // dd($fimOrdem);
         return redirect()->route('ordemdeservico.index')->with('success', 'Ordem de Serviço finalizada com sucesso!');
         }
         // dd($id);
-        // dd($fimOrdem);
+
     }
 
     public function cancelarOrdem($id)
