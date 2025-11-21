@@ -248,9 +248,9 @@ class OrdemDeServicoController extends Controller
     public function finalizarOrdem($id)
     {
         $fimOrdem = OrdemDeServico::find($id);
-
+        // dd($fimOrdem->status);
         if ($fimOrdem->status == 3) {
-            return redirect()->route('ordemdeservico.index')->with('success', 'Essa Ordem de Serviço já está finalizada.');
+            return redirect()->route('ordemdeservico.index')->with('error', 'Essa Ordem de Serviço já está finalizada.');
         }
         if ($fimOrdem->status != 3)  {
             $fimOrdem->update([
@@ -260,5 +260,19 @@ class OrdemDeServicoController extends Controller
         }
         // dd($id);
         // dd($fimOrdem);
+    }
+
+    public function cancelarOrdem($id)
+    {
+        $cancelOrdem = OrdemDeServico::find($id);
+        if ($cancelOrdem->status == 4) {
+            return redirect()->route('ordemdeservico.index')->with('error', 'Essa Ordem de Serviço já está cancelada.');
+        };
+        if ($cancelOrdem->status != 4) {
+            $cancelOrdem->update([
+                'status' => 4,
+            ]);
+            return redirect()->route('ordemdeservico.index')->with('success', 'Ordem de Serviço cancelada com sucesso!');
+        }
     }
 }

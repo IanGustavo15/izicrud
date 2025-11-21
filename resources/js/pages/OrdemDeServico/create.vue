@@ -417,11 +417,11 @@ import {
                                     <RadioGroupItem id="option-two" value="2" />
                                     <Label for="option-two">Em Andamento</Label>
                                 </div>
-                                <div class="flex items-center space-x-2">
+                                <div class="flex items-center space-x-2" v-if="isEditing"> <!-- Só vão aparecer na parte de edição -->
                                     <RadioGroupItem id="option-three" value="3" />
                                     <Label for="option-three">Finalizado</Label>
                                 </div>
-                                <div class="flex items-center space-x-2">
+                                <div class="flex items-center space-x-2" v-if="isEditing"> <!-- Só vão aparecer na parte de edição -->
                                     <RadioGroupItem id="option-four" value="4" />
                                     <Label for="option-four">Cancelado</Label>
                                 </div>

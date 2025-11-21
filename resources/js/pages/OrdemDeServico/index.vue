@@ -40,6 +40,8 @@ const itemToDelete = ref<number | null>(null);
 const showDeleteDialog = ref(false);
 const itemParaFinalizar = ref<number | null>(null);
 const showFinalizadoDialog = ref(false);
+const itemParaCancelar = ref<number | null>(null);
+const showCanceladoDialog = ref(false);
 
 const sortColumn = ref<string | null>(null);
 const sortDirection = ref<'asc' | 'desc'>('asc');
@@ -93,26 +95,6 @@ function confirmDelete(itemId: number): void {
     showDeleteDialog.value = true;
 }
 
-function confirmFinalizarOrdem(itemId: number): void{
-    itemParaFinalizar.value = itemId;
-    showFinalizadoDialog.value = true;
-}
-
-function finalizarOrdem() {
-    if (itemParaFinalizar.value !== null) {
-        router.put(`/ordemdeservico/finalizarOrdem/${itemParaFinalizar.value}`, {status: 3}, {
-            onSuccess: () => {
-                showAlert('Ordem de Serviço finalizada com sucesso!', 'success');
-                showFinalizadoDialog.value = false;
-                itemParaFinalizar.value = null;
-            },
-            onError: () => {
-                showAlert('Erro ao finalizar a Ordem de Serviço.', 'destructive');
-                showFinalizadoDialog.value = false;
-            },
-        });
-    }
-}
 function deleteItem(): void {
     if (itemToDelete.value !== null) {
         router.delete(`/ordemdeservico/${itemToDelete.value}`, {
@@ -128,6 +110,49 @@ function deleteItem(): void {
         });
     }
 }
+
+function confirmFinalizarOrdem(itemId: number): void{
+    itemParaFinalizar.value = itemId;
+    showFinalizadoDialog.value = true;
+}
+
+function finalizarOrdem() {
+    if (itemParaFinalizar.value !== null) {
+        router.put(`/ordemdeservico/finalizarOrdem/${itemParaFinalizar.value}`, {}, {
+            onSuccess: () => {
+                showAlert('Ordem de Serviço finalizada com sucesso!', 'success');
+                showFinalizadoDialog.value = false;
+                // itemParaFinalizar.value = null;
+            },
+            onError: () => {
+                showAlert('Erro ao finalizar a Ordem de Serviço.', 'destructive');
+                showFinalizadoDialog.value = false;
+            },
+        });
+    }
+}
+
+function confirmCancelarOrdem(itemId: number):void{
+    itemParaCancelar.value = itemId;
+    showCanceladoDialog.value = true;
+}
+
+function cancelarOrdem(){
+    if (itemParaCancelar.value !== null) {
+        router.put(`/ordemdeservico/cancelarOrdem/${itemParaCancelar.value}`, {}, {
+            onSuccess: () => {
+                showAlert('Ordem de Serviço cancelada com sucesso!', 'success');
+                showCanceladoDialog.value = false;
+                // itemParaCancelar.value = null;
+            },
+            onError: () => {
+                showAlert('Erro ao cancelar a Ordem de Serviço.', 'destructive');
+                showCanceladoDialog.value = false;
+            },
+        });
+    }
+}
+
 
 function goToPage(page: number) {
     router.get('/ordemdeservico', { page }, { preserveState: true, preserveScroll: true });
@@ -206,6 +231,16 @@ const canGoNext = computed(() => currentPage.value < lastPage.value);
                                         </Button>
                                     </li>
                                     <li>
+                                        <Button variant="link" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 ring-1 ring-gray-500/20" @click="confirmCancelarOrdem(item.id)">
+                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+                                            </svg>
+
+
+                                            Cancelar
+                                        </Button>
+                                    </li>
+                                    <li>
                                         <Button variant="link" class="text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 ring-1 ring-red-500/20" @click="confirmDelete(item.id)">
                                             <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 stroke-current">
                                                 <path d="M10 12V17" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
@@ -248,6 +283,21 @@ const canGoNext = computed(() => currentPage.value < lastPage.value);
                     <DialogFooter>
                         <Button variant="outline" @click="showFinalizadoDialog = false">Cancelar</Button>
                         <Button variant="default" @click="finalizarOrdem">Finalizar</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            <Dialog v-model:open="showCanceladoDialog">
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Confirmar Cancelamento</DialogTitle>
+                        <DialogDescription>
+                            Tem certeza de que deseja cancelar esta Ordem de Serviço?
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter>
+                        <Button variant="outline" @click="showCanceladoDialog = false">Voltar</Button>
+                        <Button variant="default" @click="cancelarOrdem">Cancelar Ordem de Serviço</Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
