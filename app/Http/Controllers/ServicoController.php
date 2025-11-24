@@ -35,14 +35,22 @@ class ServicoController extends Controller
                     'quantidade' => $item->quantidade,
                 ];
             });
+        $quantiaPeca = PecaServico::where('deleted', 0)->orderBy('id', 'desc')->get()->map(function ($item) {
+                return [
+                    'value' => $item->id,
+                    'quantidade_peca' => $item->quantidade_peca,
+                ];
+            });
+
             // dd($pecas);
+            // dd($quantiaPeca);
 
 
 
         return inertia('Servico/create', [
             'sidebarNavItems' => $this->getSidebarNavItems(),
             'pecas' => $pecas,
-
+            'quantiaPeca' => $quantiaPeca
 
 
         ]);

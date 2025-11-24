@@ -98,6 +98,7 @@ interface Peca{
     label: string;
     preco_de_venda: number;
     quantidade: number;
+    // quantidade_peca: number;
 
 };
 
@@ -106,6 +107,7 @@ interface PecaServico{
     label: string;
     preco_de_venda: number;
     quantidade: number;
+    // quantidade_peca: number;
 };
 
 const props = defineProps<{
@@ -293,6 +295,8 @@ onMounted(
                                                         </SelectItem>
                                                     </SelectContent>
                                                 </Select>
+                                                <Label class="text-xs py-1">Quantia</Label>
+                                                <input v-if="!isEditing" type="number" placeholder="1" min="1">
 
 
 
