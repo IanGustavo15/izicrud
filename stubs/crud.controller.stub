@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\{{model}};
+{{pivotImports}}
 use Illuminate\Http\Request;
 
 class {{controller}} extends Controller
@@ -24,30 +25,12 @@ class {{controller}} extends Controller
     {{createMethod}}
 
 
-    public function store(Request $request)
-    {
-        $request->validate([
-            {{validationRules}}
-        ]);
-
-        {{model}}::create($request->all());
-
-        return redirect()->route('{{routePrefix}}.index')->with('success', '{{modelTitle}} criado com sucesso.');
-    }
+    {{storeMethod}}
 
     {{editMethod}}
 
 
-    public function update(Request $request, {{model}} ${{modelLower}})
-    {
-        $request->validate([
-            {{validationRules}}
-        ]);
-
-        ${{modelLower}}->update($request->all());
-
-        return redirect()->route('{{routePrefix}}.index')->with('success', '{{modelTitle}} atualizado com sucesso.');
-    }
+    {{updateMethod}}
 
     public function destroy({{model}} ${{modelLower}})
     {
@@ -63,4 +46,6 @@ class {{controller}} extends Controller
             ['title' => 'Criar Novo {{modelTitle}}', 'href' => '/{{routePrefix}}/create'],
         ];
     }
+
+{{pivotHelper}}
 }

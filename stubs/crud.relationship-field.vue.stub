@@ -1,0 +1,162 @@
+<script setup lang="ts">
+import { ref, computed } from 'vue';
+import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { useForm } from '@inertiajs/vue3';
+import { X, Plus } from 'lucide-vue-next';
+
+interface Props {
+    modelValue: number[];
+    availableItems: { value: number; label: string }[];
+    label: string;
+    relatedModel: string;
+    placeholder?: string;
+}
+
+interface RelatedItemForm {
+    nome: string;
+    // TODO: Adicionar outros campos conforme necessário para o modelo relacionado
+}
+
+const props = withDefaults(defineProps<Props>(), {
+    placeholder: 'Selecione itens...'
+});
+
+const emit = defineEmits<{
+    'update:modelValue': [value: number[]]
+}>();
+
+const selectedValue = ref<string>('');
+const showCreateModal = ref(false);
+
+const selectedItems = computed(() => {
+    return props.availableItems.filter(item => props.modelValue.includes(item.value));
+});
+
+const availableForSelection = computed(() => {
+    return props.availableItems.filter(item => !props.modelValue.includes(item.value));
+});
+
+// Form para criar novo item relacionado
+const createForm = useForm<RelatedItemForm>({
+    nome: '',
+    // TODO: Adicionar outros campos conforme necessário
+});
+
+function addItem() {
+    if (selectedValue.value) {
+        const newValue = parseInt(selectedValue.value);
+        emit('update:modelValue', [...props.modelValue, newValue]);
+        selectedValue.value = '';
+    }
+}
+
+function removeItem(itemValue: number) {
+    emit('update:modelValue', props.modelValue.filter(id => id !== itemValue));
+}
+
+function createNewItem() {
+    createForm.post(`/${props.relatedModel.toLowerCase()}s`, {
+        onSuccess: (page) => {
+            // TODO: Atualizar lista de items disponíveis
+            // TODO: Adicionar o novo item à seleção
+            showCreateModal.value = false;
+            createForm.reset();
+            // Exemplo de como seria implementado:
+            // const newItem = page.props.flash.newItem;
+            // emit('update:modelValue', [...props.modelValue, newItem.id]);
+        },
+        onError: () => {
+            console.error('Erro ao criar novo item');
+        }
+    });
+}
+</script>
+
+<template>
+    <div class="space-y-3">
+        <Label>{{ label }}</Label>
+
+        <!-- Lista de itens selecionados -->
+        <div v-if="selectedItems.length > 0" class="flex flex-wrap gap-2">
+            <Badge v-for="item in selectedItems" :key="item.value" variant="secondary" class="flex items-center gap-1">
+                {{ item.label }}
+                <Button
+                    variant="ghost"
+                    size="sm"
+                    class="h-4 w-4 p-0 hover:bg-destructive hover:text-destructive-foreground"
+                    @click="removeItem(item.value)"
+                >
+                    <X class="h-3 w-3" />
+                </Button>
+            </Badge>
+        </div>
+
+        <!-- Select para adicionar novos itens -->
+        <div class="flex gap-2">
+            <div class="flex-1">
+                <Select v-model="selectedValue">
+                    <SelectTrigger>
+                        <SelectValue :placeholder="placeholder" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem
+                            v-for="item in availableForSelection"
+                            :key="item.value"
+                            :value="item.value.toString()"
+                        >
+                            {{ item.label }}
+                        </SelectItem>
+                    </SelectContent>
+                </Select>
+            </div>
+            <Button @click="addItem" :disabled="!selectedValue" variant="outline">
+                Adicionar
+            </Button>
+        </div>
+
+        <!-- Botão para criar novo item -->
+        <Dialog v-model:open="showCreateModal">
+            <DialogTrigger asChild>
+                <Button variant="outline" size="sm" class="w-fit">
+                    <Plus class="h-4 w-4 mr-2" />
+                    Criar Novo {{ relatedModel }}
+                </Button>
+            </DialogTrigger>
+            <DialogContent class="sm:max-w-md">
+                <DialogHeader>
+                    <DialogTitle>Criar Novo {{ relatedModel }}</DialogTitle>
+                </DialogHeader>
+                <form @submit.prevent="createNewItem" class="space-y-4">
+                    <div>
+                        <Label for="nome">Nome</Label>
+                        <Input
+                            id="nome"
+                            v-model="createForm.nome"
+                            placeholder="Digite o nome"
+                            required
+                        />
+                        <div v-if="createForm.errors.nome" class="text-sm text-red-600 mt-1">
+                            {{ createForm.errors.nome }}
+                        </div>
+                    </div>
+
+                    <!-- TODO: Adicionar outros campos conforme necessário para o modelo relacionado -->
+
+                    <div class="flex justify-end space-x-2">
+                        <Button type="button" variant="outline" @click="showCreateModal = false">
+                            Cancelar
+                        </Button>
+                        <Button type="submit" :disabled="createForm.processing">
+                            Criar
+                        </Button>
+                    </div>
+                </form>
+            </DialogContent>
+        </Dialog>
+    </div>
+</template>

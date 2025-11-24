@@ -6,7 +6,10 @@ use Illuminate\Database\Eloquent\Model;
 
 class {{model}} extends Model
 {
+    {{tableName}}
     protected $fillable = [{{fillable}}, 'deleted'];
 
     // protected $casts = [{{casts}}];
+
+{{relationships}}
 }
