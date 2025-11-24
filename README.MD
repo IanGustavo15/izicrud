@@ -14,7 +14,8 @@ Desenvolvido por **Nicolas Slujalkovsky** 🚀
 - **Relacionamentos Inteligentes**: Suporte automático para relacionamentos 1:1 (belongsTo) e 1:N (belongsToMany) com interface rica.
 - **Componentes Vue Dinâmicos**: Interface interativa para relacionamentos com modal de criação rápida.
 - **Stack Moderna**: Laravel 12 backend + Vue.js frontend com TypeScript.
-- **Estrutura Pronta**: Arquivos organizados para iniciar seu projeto rapidamente.
+- **Soft Delete Integrado**: Todos os CRUDs incluem soft delete com filtros automáticos.
+- **Geração Condicional**: Imports e códigos gerados apenas quando necessários para performance otimizada.
 - **Integração Sidebar**: Adiciona automaticamente itens de menu ao sidebar.
 - **TODOs Orientativos**: Guias claros sobre o que ajustar após a geração.
 - **Customizável**: Adapte facilmente às suas necessidades.
@@ -75,7 +76,7 @@ Agora você pode criar relacionamentos **1 para muitos** usando a sintaxe `pMode
 
 ```bash
 # Exemplo: Uma Ordem de Serviço que tem vários Serviços
-php artisan make:crud OrdemServico numero:"Número":string cliente:"Cliente":string servicos:"Serviços":pServico
+php artisan make:crud OrdemServico numero:"Número":string id_pet:"Pet":integer servicos:"Serviços":pServico
 ```
 
 Isso gerará:
@@ -97,7 +98,7 @@ Isso gerará:
 | `decimal`         | Número decimal exato.                               | `valor:"Valor":decimal` |
 | `boolean`         | Valor verdadeiro ou falso.                          | `ativo:"Ativo":boolean` |
 | `date`            | Data (YYYY-MM-DD).                                  | `nascimento:"Data de Nascimento":date` |
-| `datetime`        | Data e hora (YYYY-MM-DD HH:MM:SS).                  | `created_at:"Criado em":datetime` |
+| `datetime`        | Data e hora (YYYY-MM-DD HH:MM:SS).                  | `data_servico:"Data do Serviço":datetime` |
 | `timestamp`       | Timestamp com data e hora.                          | `ultimo_acesso:"Último Acesso":timestamp` |
 | `json`            | Dados no formato JSON.                              | `configuracoes:"Configurações":json` |
 | `email`           | Endereço de e-mail.                                 | `email:"E-mail":email` |
@@ -143,7 +144,7 @@ php artisan make:crud Produto nome:"Nome":string preco:"Preço":moeda descricao:
 
 #### Exemplo 3: Sistema de Ordem de Serviço
 ```bash
-php artisan make:crud OrdemServico numero:"Número":string id_cliente:"Cliente":integer data_servico:"Data do Serviço":date servicos:"Serviços":pServico observacoes:"Observações":text
+php artisan make:crud OrdemServico numero:"Número":string id_pet:"Pet":integer data_servico:"Data do Serviço":datetime servicos:"Serviços":pServico observacoes:"Observações":text
 ```
 
 #### 🏥 **Exemplo Completo: Clínica Veterinária**
@@ -240,7 +241,26 @@ O componente `RelationshipManyField` oferece uma interface rica e intuitiva para
 
 ---
 
-## 🖥️ Interface de Desenvolvimento para CRUDs
+## 🔧 Melhorias Técnicas Recentes
+
+### ✅ **Sistema Otimizado de Geração**
+- **Geração Condicional**: Imports e blocos de código são gerados apenas quando necessários
+- **Performance Aprimorada**: Vue.js carrega apenas componentes utilizados
+- **TypeScript Completo**: Tipagem total para segurança de código
+
+### 🗑️ **Soft Delete Avançado**
+- **Filtros Automáticos**: Todos os CRUDs incluem `where('deleted', 0)` automaticamente
+- **Controle de Estado**: Sistema completo de exclusão lógica
+- **Interface Limpa**: Apenas registros ativos são exibidos por padrão
+
+### 🔗 **Relacionamentos Inteligentes**
+- **Pivot Tables**: Suporte completo a relacionamentos N:N com interface rica
+- **Sync Automático**: Gravação e edição de relacionamentos sem complexidade
+- **Componentes Dinâmicos**: Interface responsiva para gerenciamento de relações
+
+---
+
+## 💻 Interface de Desenvolvimento para CRUDs
 
 Além do comando `make:crud`, você pode acessar uma interface gráfica para gerar CRUDs diretamente no navegador. Isso facilita o processo de configuração e criação.
 
@@ -313,6 +333,37 @@ Além do comando `make:crud`, você pode acessar uma interface gráfica para ger
 ------------------------------------------------
 🎉 Pronto! Verifique os arquivos e ajuste conforme necessário.
 ```
+
+---
+
+## 🎯 **Sistema Completo Testado: Clínica Veterinária**
+
+O exemplo da clínica veterinária demonstra todo o poder do LaraVue IzCRUD com:
+
+### 📋 **Funcionalidades Implementadas:**
+- ✅ **CRUD Completo**: Donos, Pets, Serviços e Ordens de Serviço
+- ✅ **Relacionamentos 1:1**: Pet → Dono (chave estrangeira)
+- ✅ **Relacionamentos 1:N**: OrdemServico → Serviços (pivot table)
+- ✅ **Soft Delete**: Todos os registros com exclusão lógica
+- ✅ **Interface Rica**: Modals, dropdowns dinâmicos, badges visuais
+- ✅ **TypeScript**: Tipagem completa para segurança
+- ✅ **Validação**: Regras de validação automáticas
+
+### 🚀 **Execute em 30 segundos:**
+```bash
+git clone https://github.com/NicolasKovsky/izicrud.git
+cd izicrud
+composer install && npm install
+cp .env.example .env && php artisan key:generate
+php artisan migrate:fresh
+
+# Copie e cole todos os comandos de uma vez:
+php artisan make:crud Dono nome:"Nome":string email:"E-mail":email telefone:"Telefone":string endereco:"Endereço":text && php artisan make:crud Pet nome:"Nome":string especie:"Espécie":string raca:"Raça":string idade:"Idade":integer id_dono:"Dono":integer peso:"Peso":float observacoes:"Observações":text && php artisan make:crud Servico nome:"Nome":string descricao:"Descrição":text preco:"Preço":moeda duracao_minutos:"Duração (min)":integer ativo:"Ativo":boolean && php artisan make:crud OrdemServicoServico id_ordemservico:"Ordem de Serviço":integer id_servico:"Serviço":integer && php artisan make:crud OrdemServico numero:"Número":string id_pet:"Pet":integer data_servico:"Data do Serviço":datetime servicos:"Serviços":pServico valor_total:"Valor Total":moeda status:"Status":string observacoes:"Observações":text
+
+php artisan migrate && npm run dev
+```
+
+**Pronto!** Sistema completo funcionando em `http://localhost:8000` 🎉
 
 ---
 
