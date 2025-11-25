@@ -111,18 +111,6 @@ php artisan migrate
 
 ---
 
-## 🔧 Comandos Úteis
-
-```bash
-# Interface de desenvolvimento
-php artisan serve  # http://localhost:8000/dev/crud-generator
-
-# Exemplos rápidos
-php artisan make:crud Post titulo:"Título":string conteudo:"Conteúdo":text
-php artisan make:crud Produto nome:"Nome":string preco:"Preço":moeda categorias:"Categorias":pCategoria
-```
-
----
 
 ## 🛠️ Requisitos
 
