@@ -98,57 +98,12 @@ const mockData = {
                 <!-- Hero Section -->
                 <section class="text-center mb-20">
                     <h1 class="text-5xl lg:text-7xl font-bold text-[#1b1b18] dark:text-[#EDEDEC] mb-6">
-                        Gere Sistemas Completos
-                        <span class="block text-orange-500 mt-2">em 30 Segundos</span>
+                        LaraVue IziCrude
                     </h1>
-                    <p class="text-xl text-gray-600 dark:text-gray-300 mb-8 max-w-4xl mx-auto leading-relaxed">
-                        Plataforma white-label que transforma ideias em aplicações profissionais.
-                        <strong>Sem código complexo, sem dependências, sem limitações.</strong>
-                    </p>
-
-                    <div class="flex flex-col sm:flex-row gap-4 justify-center mb-16">
-                        <Link
-                            v-if="$page.props.auth.user"
-                            :href="dashboard()"
-                            class="px-10 py-5 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white font-bold text-lg rounded-xl transition-all duration-200 shadow-2xl hover:shadow-3xl transform hover:-translate-y-1"
-                        >
-                            🚀 Acessar Plataforma
-                        </Link>
-                        <template v-else>
-                            <Link
-                                :href="register()"
-                                class="px-10 py-5 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white font-bold text-lg rounded-xl transition-all duration-200 shadow-2xl hover:shadow-3xl transform hover:-translate-y-1"
-                            >
-                                🚀 Teste Grátis por 14 Dias
-                            </Link>
-                            <Link
-                                :href="login()"
-                                class="px-10 py-5 bg-white hover:bg-gray-50 dark:bg-gray-800 dark:hover:bg-gray-700 text-[#1b1b18] dark:text-[#EDEDEC] font-bold text-lg rounded-xl border-2 border-gray-200 dark:border-gray-600 transition-all duration-200"
-                            >
-                                Ver Demo
-                            </Link>
-                        </template>
-                    </div>
-
-                    <!-- Trust Badges -->
-                    <div class="flex flex-wrap justify-center items-center gap-8 text-sm text-gray-500 dark:text-gray-400">
-                        <span class="flex items-center gap-2">✅ Sem instalação</span>
-                        <span class="flex items-center gap-2">⚡ Deploy automático</span>
-                        <span class="flex items-center gap-2">🔒 100% seguro</span>
-                        <span class="flex items-center gap-2">📱 Responsivo</span>
-                    </div>
                 </section>
 
                 <!-- Demo Section -->
                 <section class="mb-20">
-                    <div class="text-center mb-12">
-                        <h2 class="text-4xl font-bold text-[#1b1b18] dark:text-[#EDEDEC] mb-4">
-                            Veja o Sistema em Ação
-                        </h2>
-                        <p class="text-xl text-gray-600 dark:text-gray-300">
-                            Interface real gerada automaticamente em segundos
-                        </p>
-                    </div>
 
                     <!-- Mock Dashboard -->
                     <div class="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 p-6 mb-8">
@@ -208,82 +163,9 @@ const mockData = {
                             </table>
                         </div>
                     </div>
-
-                    <div class="text-center">
-                        <p class="text-lg text-gray-600 dark:text-gray-300 mb-4">
-                            ⬆️ <strong>Esta interface foi gerada automaticamente</strong> a partir do comando:
-                        </p>
-                        <div class="bg-gray-900 text-green-400 p-4 rounded-lg font-mono text-sm max-w-2xl mx-auto">
-                            php artisan make:crud Cliente nome:string email:email status:string
-                        </div>
-                    </div>
                 </section>
 
-                <!-- Features Section -->
-                <section class="mb-20">
-                    <div class="text-center mb-12">
-                        <h2 class="text-3xl font-bold text-[#1b1b18] dark:text-[#EDEDEC] mb-4">
-                            Tudo Incluído, Nada a Mais
-                        </h2>
-                    </div>
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                        <div v-for="feature in features" :key="feature.title"
-                             class="p-6 rounded-xl bg-gradient-to-br from-white to-gray-50 dark:from-gray-800 dark:to-gray-900 border border-gray-200 dark:border-gray-700 hover:shadow-xl transition-all duration-300 hover:-translate-y-2">
-                            <div class="text-4xl mb-4">{{ feature.icon }}</div>
-                            <h3 class="font-bold text-lg text-[#1b1b18] dark:text-[#EDEDEC] mb-3">{{ feature.title }}</h3>
-                            <p class="text-gray-600 dark:text-gray-300 text-sm leading-relaxed">{{ feature.description }}</p>
-                        </div>
-                    </div>
-                </section>
-
-                <!-- Testimonials Section -->
-                <section class="mb-20">
-                    <div class="text-center mb-12">
-                        <h2 class="text-3xl font-bold text-[#1b1b18] dark:text-[#EDEDEC] mb-4">
-                            Clientes Satisfeitos
-                        </h2>
-                    </div>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <div v-for="testimonial in testimonials" :key="testimonial.name"
-                             class="p-6 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700">
-                            <div class="flex mb-4">
-                                <span v-for="i in testimonial.rating" :key="i" class="text-yellow-400 text-xl">⭐</span>
-                            </div>
-                            <p class="text-gray-600 dark:text-gray-300 mb-4 italic">"{{ testimonial.text }}"</p>
-                            <div>
-                                <div class="font-semibold text-[#1b1b18] dark:text-[#EDEDEC]">{{ testimonial.name }}</div>
-                                <div class="text-sm text-gray-500">{{ testimonial.company }}</div>
-                            </div>
-                        </div>
-                    </div>
-                </section>
-
-                <!-- CTA Final -->
-                <section class="text-center bg-gradient-to-r from-orange-500 to-red-500 rounded-2xl p-12 text-white">
-                    <h2 class="text-4xl font-bold mb-6">
-                        Pronto para Revolucionar seu Desenvolvimento?
-                    </h2>
-                    <p class="text-xl mb-8 opacity-90">
-                        Junte-se a centenas de desenvolvedores que já economizam horas todos os dias.
-                    </p>
-                    <div class="flex flex-col sm:flex-row gap-4 justify-center">
-                        <Link
-                            v-if="!$page.props.auth.user"
-                            :href="register()"
-                            class="px-10 py-5 bg-white text-orange-500 font-bold text-lg rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl hover:bg-gray-50"
-                        >
-                            🎯 Começar Teste Grátis
-                        </Link>
-                        <Link
-                            :href="$page.props.auth.user ? dashboard() : login()"
-                            class="px-10 py-5 bg-transparent border-2 border-white text-white font-bold text-lg rounded-xl transition-all duration-200 hover:bg-white hover:text-orange-500"
-                        >
-                            {{ $page.props.auth.user ? '🚀 Ir para Dashboard' : '👀 Ver Demonstração' }}
-                        </Link>
-                    </div>
-                </section>
             </main>
         </div>
-        <div class="hidden h-14.5 lg:block"></div>
     </div>
 </template>
