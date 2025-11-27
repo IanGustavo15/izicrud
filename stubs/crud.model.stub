@@ -8,6 +8,7 @@ class {{model}} extends Model
 {
     {{tableName}}
     protected $fillable = [{{fillable}}, 'deleted'];
+    protected $displayLabels = [{{displayLabels}}];
 
     // protected $casts = [{{casts}}];
 

@@ -1,6 +1,6 @@
 # 🚀 LaraVue IzCRUD
 
-> Gerador de CRUDs inteligente para **Laravel 12 + Vue.js** com relacionamentos avançados e TypeScript.
+> Gerador de CRUDs inteligente para **Laravel 12 + Vue.js** com relacionamentos automáticos e TypeScript.
 
 [![Laravel](https://img.shields.io/badge/Laravel-12-FF2D20?style=flat&logo=laravel)](https://laravel.com)
 [![Vue.js](https://img.shields.io/badge/Vue.js-3-4FC08D?style=flat&logo=vue.js)](https://vuejs.org)
@@ -8,128 +8,103 @@
 
 **Transforme uma ideia em aplicação completa em 30 segundos.**
 
-Criado por [**Nicolas Slujalkovsky**](https://github.com/NicolasKovsky) 💙
-
 ---
 
 ## 🚀 Quick Start
 
 ```bash
-# Clone e configure
+# Setup
 git clone https://github.com/NicolasKovsky/izicrud.git && cd izicrud
 composer install && npm install
 cp .env.example .env && php artisan key:generate && php artisan migrate
 
 # Primeiro CRUD
 php artisan make:crud Post titulo:"Título":string conteudo:"Conteúdo":text
-php artisan migrate && php artisan serve & npm run dev
+php artisan migrate && npm run dev
 ```
 
 ✅ **Pronto!** Acesse `http://localhost:8000`
 
 ---
 
-## ⚡ O que Gera Automaticamente?
+## ⚡ O que Gera?
 
-### **Backend**
-- **Model** com relacionamentos
-- **Controller** com validação completa
-- **Migration** com índices
-- **Routes** integradas
-
-### **Frontend**
-- **Views Vue** responsivas + TypeScript
-- **Componentes** para relacionamentos N:N
-- **Menu** atualizado automaticamente
-- **Interface rica** com modals e badges
+**Backend:** Model + Controller + Migration + Routes
+**Frontend:** Views Vue + TypeScript + Menu automático
+**Plus:** Relacionamentos N:N com interface visual
 
 ---
 
-## 📚 Sintaxe de Campos
+## 📚 Sintaxe
 
-### **Básicos**
+### **Campos Básicos**
 ```bash
-nome:"Nome":string          # Texto curto
+nome:"Nome":string          # Texto
 descricao:"Descrição":text  # Texto longo
-idade:"Idade":integer       # Número
 preco:"Preço":moeda        # Valor monetário
 ativo:"Ativo":boolean      # Sim/Não
 data:"Data":date           # Data
-```
-
-### **Upload**
-```bash
-foto:"Foto":file           # Arquivo único
-anexos:"Anexos":files      # Múltiplos arquivos
+foto:"Foto":file           # Upload único
+anexos:"Anexos":files      # Upload múltiplo
 ```
 
 ### **Relacionamentos**
 ```bash
 id_categoria:"Categoria":integer     # 1:1 (belongsTo)
-tags:"Tags":pTag                     # N:N (pivot)
+tags:"Tags":pTag                     # N:N (belongsToMany)
 ```
 
 ---
 
-## 🎯 Exemplo Prático
+## 🎯 Exemplo: Clínica Veterinária
 
-### **🏥 Clínica Veterinária**
 ```bash
 php artisan migrate:fresh
 
-php artisan make:crud Dono nome:"Nome":string email:"E-mail":email telefone:"Telefone":string endereco:"Endereço":text
+# Donos
+php artisan make:crud Dono nome:"Nome":string email:"E-mail":email telefone:"Telefone":string
 
-php artisan make:crud Pet nome:"Nome":string especie:"Espécie":string raca:"Raça":string idade:"Idade":integer id_dono:"Dono":integer peso:"Peso":float observacoes:"Observações":text
+# Pets com relacionamento
+php artisan make:crud Pet nome:"Nome":string especie:"Espécie":string id_dono:"Dono":integer peso:"Peso":float
 
-php artisan make:crud Servico nome:"Nome":string descricao:"Descrição":text preco:"Preço":moeda duracao_minutos:"Duração (min)":integer ativo:"Ativo":boolean
+# Serviços
+php artisan make:crud Servico nome:"Nome":string preco:"Preço":moeda ativo:"Ativo":boolean
 
+# Tabela pivot
 php artisan make:crud OrdemServicoServico id_ordemservico:"Ordem de Serviço":integer id_servico:"Serviço":integer
 
-php artisan make:crud OrdemServico numero:"Número":string id_pet:"Pet":integer data_servico:"Data do Serviço":datetime servicos:"Serviços":pServico valor_total:"Valor Total":moeda status:"Status":string observacoes:"Observações":text
+# Ordens com relacionamento N:N
+php artisan make:crud OrdemServico numero:"Número":string id_pet:"Pet":integer servicos:"Serviços":pServico valor_total:"Valor Total":moeda
 
 php artisan migrate
-
 ```
 
-**🎯 Demonstra:** belongsTo, hasMany, relacionamentos pivot
+**🎯 Gera:** Sistema completo com relacionamentos belongsTo, hasMany e belongsToMany
 
 ---
 
-## 🎨 Interface Rica
+## 🎨 Recursos
 
-### **Relacionamentos N:N**
-- **Badges visuais** dos itens selecionados
-- **Dropdown inteligente** com busca
-- **Modal de criação** rápida
-- **Sync automático** no backend
-
-### **Design Moderno**
-- **Responsivo** mobile-first
-- **Dark mode** automático
-- **TypeScript** completo
-- **Soft delete** integrado
+- **Dropdowns inteligentes** - Detecta campos automaticamente via `$displayLabels`
+- **Relacionamentos N:N** - Interface com badges e seleção múltipla
+- **TypeScript completo** - Tipagem automática em todos os componentes
+- **Soft delete integrado** - Sistema de exclusão reversível
+- **Design responsivo** - Mobile-first com dark mode
 
 ---
-
 
 ## 🛠️ Requisitos
 
-- **PHP** 8.2+ | **Laravel** 12+ | **Node.js** 18+ | **Composer** 2.0+
+**PHP** 8.2+ | **Laravel** 12+ | **Node.js** 18+ | **Composer** 2.0+
 
 ---
 
-## 👤 Autor
-
 <div align="center">
 
-**Nicolas Slujalkovsky**
-*Full Stack Developer*
+**Nicolas Slujalkovsky** - *Full Stack Developer*
 
-[![LinkedIn](https://img.shields.io/badge/LinkedIn-nicolas--slujalkovsky-0077B5?style=flat&logo=linkedin)](https://linkedin.com/in/nicolas-slujalkovsky)
 [![GitHub](https://img.shields.io/badge/GitHub-NicolasKovsky-181717?style=flat&logo=github)](https://github.com/NicolasKovsky)
 
-**⭐ Ajudou? Deixe uma estrela!**
-
-*Feito com 💙 para a comunidade Laravel*
+**⭐ Ajudou? Deixe uma estrela!** | *Feito com 💙 para a comunidade Laravel*
 
 </div>

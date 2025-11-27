@@ -107,6 +107,7 @@ class MakeCrud extends Command
     protected function createModel($model, $fields)
     {
         $fillable = implode(', ', array_map(fn($f) => "'{$f['name']}'", array_filter($fields, fn($f) => !$f['is_pivot'])));
+        $displayLabels = $this->generateDisplayLabels($fields);
         $casts = implode(', ', array_filter(array_map(fn($f) => match ($f['type']) {
             'files' => "'{$f['name']}' => 'array'",
             'float', 'double', 'decimal', 'moeda' => "'{$f['name']}' => 'float'",
@@ -114,24 +115,12 @@ class MakeCrud extends Command
             default => null
         }, array_filter($fields, fn($f) => !$f['is_pivot']))));
 
-        $relationships = implode("\n    ", array_filter(array_map(function ($f) use ($model) {
-            if ($f['is_foreign']) {
-                $relatedModel = $f['related_model'];
-                $relationshipName = strtolower($relatedModel);
-                return "// TODO: Implement relationship for {$f['name']}\n    public function {$relationshipName}()\n    {\n        return \$this->belongsTo(\\App\\Models\\{$relatedModel}::class, '{$f['name']}');\n    }";
-            } elseif ($f['is_pivot']) {
-                $relatedModel = $f['related_model'];
-                $relationshipName = strtolower($f['name']);
-                $pivotTableName = $this->generatePivotTableName($model, $relatedModel);
-                return "// TODO: Implement pivot relationship for {$f['name']}\n    public function {$relationshipName}()\n    {\n        return \$this->belongsToMany(\\App\\Models\\{$relatedModel}::class, '{$pivotTableName}')\n            ->withTimestamps();\n        // TODO: Adicionar withPivot() se houver campos extras na tabela pivot\n    }";
-            }
-            return '';
-        }, $fields)));
+        $relationships = $this->generateRelationships($fields, $model);
 
         $tableName = $this->generateTableName($model);
 
         $stub = File::get(base_path('stubs/crud.model.stub'));
-        $stub = str_replace(['{{model}}', '{{tableName}}', '{{fillable}}', '{{casts}}', '{{relationships}}'], [$model, $tableName, $fillable, $casts, $relationships], $stub);
+        $stub = str_replace(['{{model}}', '{{tableName}}', '{{fillable}}', '{{displayLabels}}', '{{casts}}', '{{relationships}}'], [$model, $tableName, $fillable, $displayLabels, $casts, $relationships], $stub);
         File::put(app_path("Models/{$model}.php"), $stub);
     }
 
@@ -153,9 +142,11 @@ class MakeCrud extends Command
         $dropdownData = implode("\n        ", array_filter(array_map(
             function ($f) {
                 if ($f['is_foreign']) {
-                    return "\${$f['name']}Options = \\App\\Models\\{$f['related_model']}::where('deleted', 0)->orderBy('id', 'desc')->get()->map(function (\$item) {\n                return [\n                    'value' => \$item->id,\n                    'label' => \$item->nome // TODO: Ajustar o campo 'nome' conforme o modelo relacionado\n                ];\n            });";
+                    $displayField = $this->getModelDisplayField($f['related_model']);
+                    return "\${$f['name']}Options = \\App\\Models\\{$f['related_model']}::where('deleted', 0)->orderBy('{$displayField}', 'asc')->get()->map(function (\$item) {\n                return [\n                    'value' => \$item->id,\n                    'label' => \$item->{$displayField}\n                ];\n            });";
                 } elseif ($f['is_pivot']) {
-                    return "\${$f['name']}Options = \\App\\Models\\{$f['related_model']}::where('deleted', 0)->orderBy('nome', 'asc')->get()->map(function (\$item) {\n                return [\n                    'value' => \$item->id,\n                    'label' => \$item->nome // TODO: Ajustar o campo 'nome' conforme o modelo relacionado\n                ];\n            });";
+                    $displayField = $this->getModelDisplayField($f['related_model']);
+                    return "\${$f['name']}Options = \\App\\Models\\{$f['related_model']}::where('deleted', 0)->orderBy('{$displayField}', 'asc')->get()->map(function (\$item) {\n                return [\n                    'value' => \$item->id,\n                    'label' => \$item->{$displayField}\n                ];\n            });";
                 }
                 return '';
             },
@@ -562,14 +553,17 @@ VUE;
             if ($field['is_foreign']) {
                 $this->info("  • Configurar dropdown para o campo '{$field['name']}' no controlador e vue.");
                 $this->warn("⚠️  Certifique-se de que o modelo relacionado '{$field['related_model']}' existe e está configurado corretamente.");
+                $this->info("  📋 Relacionamento belongsTo criado automaticamente");
+                $this->warn("  🔄 Copie o relacionamento reverso para o modelo {$field['related_model']}.php");
             }
 
             if ($field['is_pivot']) {
-                $this->info("  • Configurar relacionamento pivot para '{$field['name']}' no modelo.");
-                $this->info("  • Ajustar sync do relacionamento '{$field['name']}' no controlador.");
+                $this->info("  • Relacionamento pivot '{$field['name']}' configurado automaticamente.");
+                $this->info("  • Sync do relacionamento '{$field['name']}' implementado no controlador.");
                 $this->info("  • Verificar se a tabela pivot existe ou criar migration para ela.");
                 $this->warn("⚠️  Certifique-se de que o modelo relacionado '{$field['related_model']}' existe.");
-                $this->warn("⚠️  Ajustar campo de exibição no controller (atualmente usando 'nome').");
+                $this->info("  📋 Relacionamento belongsToMany criado automaticamente");
+                $this->warn("  🔄 Copie o relacionamento reverso para o modelo {$field['related_model']}.php");
             }
         }
 
@@ -817,6 +811,194 @@ VUE;
         }
 
         return "\$this->processPivotRelationships({$modelVar}, \$request->all(), " . ($isUpdate ? 'true' : 'false') . ");";
+    }
+
+    /**
+     * Gera relacionamentos automáticos para o modelo
+     */
+    private function generateRelationships(array $fields, string $model): string
+    {
+        $relationships = [];
+        $todos = [];
+
+        foreach ($fields as $field) {
+            if ($field['is_foreign']) {
+                $relatedModel = $field['related_model'];
+                $relationshipName = strtolower($relatedModel);
+
+                $relationships[] = "    // Relacionamento belongsTo automático";
+                $relationships[] = "    public function {$relationshipName}()";
+                $relationships[] = "    {";
+                $relationships[] = "        return \$this->belongsTo(\\App\\Models\\{$relatedModel}::class, '{$field['name']}');";
+                $relationships[] = "    }";
+                $relationships[] = "";
+
+                // TODO para o modelo relacionado (hasMany)
+                $todos[] = "    // TODO: Cole no modelo {$relatedModel}.php:";
+                $todos[] = "    // public function " . strtolower(Str::plural($model)) . "()";
+                $todos[] = "    // {";
+                $todos[] = "    //     return \$this->hasMany(\\App\\Models\\{$model}::class, '{$field['name']}')->where('deleted', 0);";
+                $todos[] = "    // }";
+                $todos[] = "";
+
+            } elseif ($field['is_pivot']) {
+                $relatedModel = $field['related_model'];
+                $relationshipName = strtolower($field['name']);
+                $pivotTableName = $this->generatePivotTableName($model, $relatedModel);
+
+                $relationships[] = "    // Relacionamento belongsToMany automático";
+                $relationships[] = "    public function {$relationshipName}()";
+                $relationships[] = "    {";
+                $relationships[] = "        return \$this->belongsToMany(\\App\\Models\\{$relatedModel}::class, '{$pivotTableName}', 'id_" . strtolower($model) . "', 'id_" . strtolower(Str::singular($field['name'])) . "')";
+                $relationships[] = "            ->wherePivot('deleted', 0)";
+                $relationships[] = "            ->withTimestamps();";
+                $relationships[] = "        // TODO: Use ->withPivot() se a tabela pivot tiver campos extras além dos IDs";
+                $relationships[] = "    }";
+                $relationships[] = "";
+
+                // TODO para o modelo relacionado (belongsToMany reverso)
+                $todos[] = "    // TODO: Cole no modelo {$relatedModel}.php:";
+                $todos[] = "    // public function " . strtolower(Str::plural($model)) . "()";
+                $todos[] = "    // {";
+                $todos[] = "    //     return \$this->belongsToMany(\\App\\Models\\{$model}::class, '{$pivotTableName}', 'id_" . strtolower(Str::singular($field['name'])) . "', 'id_" . strtolower($model) . "')";
+                $todos[] = "    //         ->wherePivot('deleted', 0)";
+                $todos[] = "    //         ->withTimestamps();";
+                $todos[] = "    // }";
+                $todos[] = "";
+            }
+        }
+
+        // Adiciona TODOs como comentários no final
+        if (!empty($todos)) {
+            $relationships[] = "    /*";
+            $relationships[] = "     * ⚠️  RELACIONAMENTOS REVERSOS - Copie e cole nos modelos indicados:";
+            $relationships[] = "     */";
+            $relationships = array_merge($relationships, $todos);
+        }
+
+        return implode("\n", $relationships);
+    }
+
+    /**
+     * Gera o array $displayLabels baseado nos campos
+     */
+    private function generateDisplayLabels(array $fields): string
+    {
+        $labels = [];
+        foreach ($fields as $field) {
+            // Pular campos pivot pois eles não estão no fillable
+            if ($field['is_pivot']) {
+                continue;
+            }
+
+            if ($field['name'] === 'deleted') {
+                $labels[] = 'null';
+            } else {
+                $labels[] = "'{$field['label']}'";
+            }
+        }
+        return implode(', ', $labels);
+    }
+
+    /**
+     * Extrai o campo display de um modelo existente baseado no $displayLabels
+     */
+    private function getModelDisplayField(string $modelName): string
+    {
+        $modelPath = app_path("Models/{$modelName}.php");
+        if (!File::exists($modelPath)) {
+            return $this->guessBestDisplayField($modelName);
+        }
+
+        $content = File::get($modelPath);
+
+        // Extrair fillable e displayLabels
+        $fillable = $this->extractFillableFields($content);
+        $displayLabels = $this->extractDisplayLabels($content);
+
+        // Encontrar o primeiro campo não-nulo em displayLabels que não seja 'deleted'
+        for ($i = 0; $i < count($fillable); $i++) {
+            if (isset($displayLabels[$i]) &&
+                $displayLabels[$i] !== null &&
+                $fillable[$i] !== 'deleted') {
+                return $fillable[$i];
+            }
+        }
+
+        // Fallback para convenção
+        return $this->guessBestDisplayField($modelName, $fillable);
+    }
+
+    /**
+     * Extrai $displayLabels de um modelo existente
+     */
+    private function extractDisplayLabels(string $content): array
+    {
+        if (preg_match('/protected\s+\$displayLabels\s*=\s*\[(.*?)\];/s', $content, $matches)) {
+            $arrayContent = $matches[1];
+            $labels = [];
+
+            // Parse básico do array
+            $items = explode(',', $arrayContent);
+            foreach ($items as $item) {
+                $item = trim($item);
+                if ($item === 'null') {
+                    $labels[] = null;
+                } elseif (preg_match('/[\'"]([^\'"]*)[\'"]/', $item, $match)) {
+                    $labels[] = $match[1];
+                } else {
+                    $labels[] = null;
+                }
+            }
+            return $labels;
+        }
+
+        return [];
+    }
+
+    /**
+     * Adivinha o melhor campo para display baseado em convenções
+     */
+    private function guessBestDisplayField(string $modelName, array $fillable = []): string
+    {
+        $priorities = ['nome', 'title', 'name', 'email', 'description'];
+
+        foreach ($priorities as $field) {
+            if (in_array($field, $fillable)) {
+                return $field;
+            }
+        }
+
+        // Se não encontrou nenhum, pega o primeiro campo que não seja deleted ou id
+        foreach ($fillable as $field) {
+            if (!in_array($field, ['deleted', 'id'])) {
+                return $field;
+            }
+        }
+
+        return 'id'; // último recurso
+    }
+
+    /**
+     * Extrai campos fillable de um modelo
+     */
+    private function extractFillableFields(string $content): array
+    {
+        if (preg_match('/protected\s+\$fillable\s*=\s*\[(.*?)\];/s', $content, $matches)) {
+            $arrayContent = $matches[1];
+            $fields = [];
+
+            // Parse do array fillable
+            $items = explode(',', $arrayContent);
+            foreach ($items as $item) {
+                if (preg_match('/[\'"]([^\'"]*)[\'"]/', trim($item), $match)) {
+                    $fields[] = $match[1];
+                }
+            }
+            return $fields;
+        }
+
+        return [];
     }
 
     /**

@@ -19,7 +19,7 @@ interface Props {
 
 interface RelatedItemForm {
     nome: string;
-    // TODO: Adicionar outros campos conforme necessário para o modelo relacionado
+    // TODO: Adicione outros campos que o modelo relacionado precisa
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -44,7 +44,7 @@ const availableForSelection = computed(() => {
 // Form para criar novo item relacionado
 const createForm = useForm<RelatedItemForm>({
     nome: '',
-    // TODO: Adicionar outros campos conforme necessário
+    // TODO: Adicione outros campos que o modelo relacionado precisa
 });
 
 function addItem() {
@@ -62,8 +62,8 @@ function removeItem(itemValue: number) {
 function createNewItem() {
     createForm.post(`/${props.relatedModel.toLowerCase()}s`, {
         onSuccess: (page) => {
-            // TODO: Atualizar lista de items disponíveis
-            // TODO: Adicionar o novo item à seleção
+            // TODO: Atualize a lista com o novo item criado
+            // TODO: Adicione automaticamente o novo item à seleção
             showCreateModal.value = false;
             createForm.reset();
             // Exemplo de como seria implementado:
@@ -145,7 +145,7 @@ function createNewItem() {
                         </div>
                     </div>
 
-                    <!-- TODO: Adicionar outros campos conforme necessário para o modelo relacionado -->
+                    <!-- TODO: Adicione outros campos que o modelo relacionado precisa -->
 
                     <div class="flex justify-end space-x-2">
                         <Button type="button" variant="outline" @click="showCreateModal = false">
