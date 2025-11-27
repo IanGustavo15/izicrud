@@ -54,7 +54,7 @@ class VeiculoController extends Controller
             'placa' => 'required|string|max:7',
             'modelo' => 'required|string',
             'ano' => 'required|integer',
-            'tipo' => 'required|integer|max:2',
+            'tipo' => 'required|integer',
         ]);
         // dd($request);
 
@@ -99,7 +99,7 @@ class VeiculoController extends Controller
             'placa' => 'required|string|max:7',
             'modelo' => 'required|string',
             'ano' => 'required|integer',
-            'tipo' => 'required|integer|max:2',
+            'tipo' => 'required|integer',
         ]);
 
         $veiculo->update($request->all());

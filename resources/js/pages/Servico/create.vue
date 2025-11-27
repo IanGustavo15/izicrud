@@ -295,8 +295,8 @@ onMounted(
                                                         </SelectItem>
                                                     </SelectContent>
                                                 </Select>
-                                                <Label class="text-xs py-1">Quantia</Label>
-                                                <input v-if="!isEditing" type="number" placeholder="1" min="1">
+                                                <!-- <Label class="text-xs py-1">Quantia</Label> -->
+                                                <!-- <input v-if="!isEditing" type="number" placeholder="1" min="1" :value=""> -->
 
 
 
