@@ -25,10 +25,7 @@ const {
     categoriesData,
     topPerformersData,
     recentOrdersData,
-    servicesData,
-    performersColumns,
     ordersColumns,
-    servicesColumns
 } = useDashboardData();
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -38,6 +35,28 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
+// interface Column {
+//   key: string;
+//   label: string;
+// }
+
+const performersColumns = [
+    { key: 'avatar', label: 'Profissional' },
+    { key: 'especialidade', label: 'Especialidade' },
+    { key: 'trabalhos', label: 'Trabalhos feitos' },
+    { key: 'rating', label: 'Avaliação' },
+    { key: 'trend', label: 'Tendência' }
+];
+
+const servicesColumns = [
+    { key: 'nome', label: 'Serviço' },
+    { key: 'categoria', label: 'Peças' },
+    { key: 'preco', label: 'Preço' },
+    { key: 'agendamentos', label: 'Quantidade' },
+    { key: 'status', label: 'Status' }
+];
+
+
 const props = defineProps<{
     stats?: Array<{
         title: string;
@@ -46,6 +65,24 @@ const props = defineProps<{
         subtitle?: string;
         variant?: 'default' | 'success' | 'warning' | 'danger';
     }>;
+
+    revenueChartData: Array<{
+        label: string;
+        value: number;
+    }>;
+    usersChartData: Array<{
+        label: string;
+        value: number;
+    }>;
+    categoriesData: Array<{
+        label: string;
+        value: number;
+    }>;
+
+    topPerformersData: Record<string, any>[];
+    recentOrdersData: Record<string, any>[];
+    servicesData: Record<string, any>[];
+
 }>();
 </script>
 
@@ -89,9 +126,9 @@ const props = defineProps<{
                 </div>
                 <div class="grid gap-4 lg:grid-cols-2">
                     <DashTable
-                        title="Melhores do ano"
+                        title="Trabalhadores"
                         :columns="performersColumns"
-                        :data="topPerformersData"
+                        :data="props.topPerformersData"
                         show-pagination
                     />
                     <DashTable
@@ -103,7 +140,7 @@ const props = defineProps<{
 
                 </div>
                 <DashTable
-                        title="Serviços Populares"
+                        title="Serviços Disponíveis"
                         :columns="servicesColumns"
                         :data="servicesData"
                         actions
