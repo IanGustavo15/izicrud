@@ -4,30 +4,32 @@ import { dashboard } from '@/routes';
 import { type BreadcrumbItem } from '@/types';
 import { Head } from '@inertiajs/vue3';
 import PlaceholderPattern from '../components/PlaceholderPattern.vue';
-import type { ChartConfig } from '@/components/ui/chart';
+import { ref, onMounted } from 'vue'
 import { Monitor } from 'lucide-vue-next';
 import { VisAxis, VisGroupedBar, VisXYContainer } from '@unovis/vue';
 import { ChartContainer, ChartCrosshair, ChartLegendContent, ChartTooltip, ChartTooltipContent, componentToString } from '@/components/ui/chart';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
-const chartData = [
-  { date: new Date('2024-01-01'), desktop: 186, mobile: 80 },
-  { date: new Date('2024-02-01'), desktop: 305, mobile: 200 },
-  { date: new Date('2024-03-01'), desktop: 237, mobile: 120 },
-  { date: new Date('2024-04-01'), desktop: 73, mobile: 190 },
-  { date: new Date('2024-05-01'), desktop: 209, mobile: 130 },
-  { date: new Date('2024-06-01'), desktop: 214, mobile: 140 },
-]
-type Data = typeof chartData[number]
-const chartConfig = {
-  desktop: {
-    label: 'Desktop',
-    color: '#F90D0D',
-  },
-  mobile: {
-    label: 'Mobile',
-    color: '#57F77A',
-  },
-} satisfies ChartConfig
+// Dash Components
+import StatsCard from '@/components/dashboard/StatsCard.vue';
+import SimpleChart from '@/components/dashboard/SimpleChart.vue';
+import DashTable from '@/components/dashboard/DashTable.vue';
+
+// Fake Data
+import { useDashboardData } from '@/composables/useDashboardData';
+
+const {
+    statsData,
+    revenueChartData,
+    usersChartData,
+    categoriesData,
+    topPerformersData,
+    recentOrdersData,
+    servicesData,
+    performersColumns,
+    ordersColumns,
+    servicesColumns
+} = useDashboardData();
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -35,69 +37,78 @@ const breadcrumbs: BreadcrumbItem[] = [
         href: dashboard().url,
     },
 ];
+
+const props = defineProps<{
+    stats?: Array<{
+        title: string;
+        value: string | number;
+        change?: string;
+        subtitle?: string;
+        variant?: 'default' | 'success' | 'warning' | 'danger';
+    }>;
+}>();
 </script>
 
 <template>
     <Head title="Dashboard" />
 
     <AppLayout :breadcrumbs="breadcrumbs">
-        <div
-            class="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4"
-        >
-            <div class="grid auto-rows-min gap-4 md:grid-cols-3">
-                <div
-                    class="relative aspect-video overflow-hidden rounded-xl border border-sidebar-border/70 dark:border-sidebar-border"
-                >
-                    <PlaceholderPattern />
+        <div class="flex h-full flex-1 flex-col gap-6 overflow-x-auto p-4">
+                <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                    <StatsCard
+                        v-for="(stat, index) in props.stats"
+                        :key="index"
+                        :title="stat.title"
+                        :value="stat.value"
+                        :change="stat.change"
+                        :subtitle="stat.subtitle"
+                        :variant="stat.variant"
+                    />
                 </div>
-                <div
-                    class="relative aspect-video overflow-hidden rounded-xl border border-sidebar-border/70 dark:border-sidebar-border"
-                >
-                    <PlaceholderPattern />
+                <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                    <SimpleChart
+                            title="Receita Mensal"
+                            type="line"
+                            :data="revenueChartData"
+                            color="#3b82f6"
+                            show-legend
+                    />
+                    <SimpleChart
+                            title="Novos Usuários"
+                            type="bar"
+                            :data="usersChartData"
+                            color="#10b981"
+                    />
+                    <SimpleChart
+                            title="Categorias"
+                            type="donut"
+                            :data="categoriesData"
+                            :percentage="52"
+                            color="#8b56f6"
+                    />
                 </div>
-                <div
-                    class="relative aspect-video overflow-hidden rounded-xl border border-sidebar-border/70 dark:border-sidebar-border"
-                >
-                    <PlaceholderPattern />
+                <div class="grid gap-4 lg:grid-cols-2">
+                    <DashTable
+                        title="Melhores do ano"
+                        :columns="performersColumns"
+                        :data="topPerformersData"
+                        show-pagination
+                    />
+                    <DashTable
+                        title="Pedidos Recentes"
+                        :columns="ordersColumns"
+                        :data="recentOrdersData"
+                        actions
+                    />
+
                 </div>
-            </div>
-            <div
-                class="relative min-h-[100vh] flex-1 rounded-xl border border-sidebar-border/70 md:min-h-min dark:border-sidebar-border"
-            >
-                <ChartContainer :config="chartConfig" class="min-h-[200px] w-full">
-    <VisXYContainer :data="chartData">
-      <VisGroupedBar
-        :x="(d: Data) => d.date"
-        :y="[(d: Data) => d.desktop, (d: Data) => d.mobile]"
-        :color="[chartConfig.desktop.color, chartConfig.mobile.color]"
-        :rounded-corners="4"
-        bar-padding="0.1"
-        group-padding="0"
-      />
-      <VisAxis
-        type="x"
-        :x="(d: Data) => d.date"
-        :tick-line="false"
-        :domain-line="false"
-        :grid-line="false"
-        :tick-format="(d: number) => {
-          const date = new Date(d)
-          return date.toLocaleDateString('en-US', {
-            month: 'short',
-          })
-        }"
-        :tick-values="chartData.map(d => d.date)"
-      />
-      <VisAxis
-        type="y"
-        :tick-format="(d: number) => ''"
-        :tick-line="false"
-        :domain-line="false"
-        :grid-line="true"
-      />
-    </VisXYContainer>
-  </ChartContainer>
-            </div>
+                <DashTable
+                        title="Serviços Populares"
+                        :columns="servicesColumns"
+                        :data="servicesData"
+                        actions
+                        show-pagination
+                    />
         </div>
     </AppLayout>
 </template>

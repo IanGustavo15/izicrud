@@ -13,8 +13,7 @@ use App\Http\Controllers\ServicoController;
 use App\Http\Controllers\PecaController;
 use App\Http\Controllers\VeiculoController;
 use App\Http\Controllers\ClienteController;
-
-
+use App\Http\Controllers\DashboardController;
 
 Route::get('/', function () {
     return Inertia::render('Welcome', [
@@ -22,9 +21,7 @@ Route::get('/', function () {
     ]);
 })->name('home');
 
-Route::get('dashboard', function () {
-    return Inertia::render('Dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
+Route::get('dashboard', [DashboardController::class, 'index'])->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::get('/sempermissao', function () {
     return Inertia::render('SemPermissao');
