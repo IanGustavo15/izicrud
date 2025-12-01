@@ -25,7 +25,6 @@ const {
     categoriesData,
     topPerformersData,
     recentOrdersData,
-    ordersColumns,
 } = useDashboardData();
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -46,6 +45,14 @@ const performersColumns = [
     { key: 'trabalhos', label: 'Trabalhos feitos' },
     { key: 'rating', label: 'Avaliação' },
     { key: 'trend', label: 'Tendência' }
+];
+
+const ordersColumns = [
+    { key: 'numero', label: 'Ordem' },
+    { key: 'pet', label: 'Dono' },
+    { key: 'servico', label: 'Serviços' },
+    { key: 'status', label: 'Status' },
+    { key: 'total', label: 'Total' }
 ];
 
 const servicesColumns = [
@@ -132,17 +139,18 @@ const props = defineProps<{
                         show-pagination
                     />
                     <DashTable
-                        title="Pedidos Recentes"
+                        title="Ordens de Serviço Recentes"
                         :columns="ordersColumns"
-                        :data="recentOrdersData"
+                        :data="props.recentOrdersData"
                         actions
+                        show-pagination
                     />
 
                 </div>
                 <DashTable
                         title="Serviços Disponíveis"
                         :columns="servicesColumns"
-                        :data="servicesData"
+                        :data="props.servicesData"
                         actions
                         show-pagination
                     />

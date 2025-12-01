@@ -152,10 +152,10 @@ const getStatusColor = (status: string) => {
   const colors = {
     'ativo': 'bg-green-500',
     'inativo': 'bg-red-500',
-    'pendente': 'bg-yellow-500',
-    'concluído': 'bg-green-500',
+    'em_aberto': 'bg-yellow-500',
+    'em_andamento': 'bg-blue-500',
+    'finalizado': 'bg-green-500',
     'cancelado': 'bg-red-500',
-    'em_andamento': 'bg-blue-500'
   };
   return colors[status as keyof typeof colors] || 'bg-gray-500';
 };

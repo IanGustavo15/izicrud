@@ -22,6 +22,8 @@ class DashboardController extends Controller
         $totalPecas = Peca::where('deleted', 0)->orderBy('id', 'desc')->count();
         $servicos = Servico::where('deleted', 0)->orderBy('id', 'asc')->get();
         $pecaServico = PecaServico::where('deleted', 0)->orderBy('id', 'asc')->get();
+        $ordemServico = OrdemDeServico::where('deleted', 0)->with('cliente')->with('veiculo')->orderBy('id', 'asc')->get();
+        $servicoOrdemServico = ServicoOrdemDeServico::where('deleted', 0)->with('servico')->with('ordemdeservico')->orderBy('id', 'asc')->get();
 
         // dd($pecaServico);
         // dd($servicos);
@@ -106,11 +108,63 @@ class DashboardController extends Controller
                 'status' => 'ativo'
             ],
         ];
+        // dd($ordemServico);
+
+        foreach ($ordemServico as $os) {
+            if ($os->status == 1) {
+            $os->status = 'em_aberto';
+        } elseif ($os->status == 2) {
+            $os->status = 'em_andamento';
+        } elseif ($os->status == 3) {
+            $os->status = 'finalizado';
+        } else {
+            $os->status = 'cancelado';
+        }
+        // dd($os);
+        }
+
+        // dd($servicoOrdemServico);
+
+        $recentOrdersData = [
+            [
+                'numero' => 'OS-' . $ordemServico[0]->id,
+                'pet' => $ordemServico[0]->cliente->nome,
+                'servico' => $servicoOrdemServico[0]->servico->descricao,
+                'status'  => $ordemServico[0]->status,
+                'total' => $ordemServico[0]->valor_total,
+                'data'  =>'24/11/2024'
+            ],
+            [
+                'numero' => 'OS-' . $ordemServico[1]->id,
+                'pet' => $ordemServico[1]->cliente->nome,
+                'servico' => $servicoOrdemServico[1]->servico->descricao,
+                'status'  => $ordemServico[1]->status,
+                'total' => $ordemServico[1]->valor_total,
+                'data'  =>'24/11/2024'
+            ],
+            [
+                'numero' => 'OS-' . $ordemServico[2]->id,
+                'pet' => $ordemServico[2]->cliente->nome,
+                'servico' => $servicoOrdemServico[2]->servico->descricao,
+                'status'  => $ordemServico[2]->status,
+                'total' => $ordemServico[2]->valor_total,
+                'data'  =>'24/11/2024'
+            ],
+            [
+                'numero' => 'OS-' . $ordemServico[3]->id,
+                'pet' => $ordemServico[3]->cliente->nome,
+                'servico' => $servicoOrdemServico[3]->servico->descricao,
+                'status'  => $ordemServico[3]->status,
+                'total' => $ordemServico[3]->valor_total,
+                'data'  =>'24/11/2024'
+            ],
+        ];
 
         return Inertia::render('Dashboard', [
             'stats' => $stats,
             'topPerformersData' => $topPerformersData,
             'servicesData' => $servicesData,
+            'recentOrdersData' => $recentOrdersData,
         ]);
     }
 }
