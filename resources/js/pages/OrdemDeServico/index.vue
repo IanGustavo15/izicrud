@@ -202,8 +202,8 @@ const canGoNext = computed(() => currentPage.value < lastPage.value);
                             <TableCell>{{ item.veiculo.modelo }}</TableCell>
                             <TableCell>{{ item.data_de_entrada }}</TableCell>
                             <TableCell>{{ item.data_de_saida }}</TableCell>
-                            <TableCell v-if="item.status == 1">Aberto</TableCell>
-                            <TableCell v-else-if="item.status == 2">Andamento</TableCell>
+                            <TableCell v-if="item.status == 1">Em Aberto</TableCell>
+                            <TableCell v-else-if="item.status == 2">Em Andamento</TableCell>
                             <TableCell v-else-if="item.status == 3">Finalizado</TableCell>
                             <TableCell v-else-if="item.status == 4">Cancelado</TableCell>
                             <!-- <TableCell>{{ item.status }}</TableCell> -->
