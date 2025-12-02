@@ -298,7 +298,7 @@ const donutSegments = computed(() => {
 });
 
 const getDonutColor = (index: number) => {
-  const colors = ['#3b82f6', '#ef4444', '#22c55e', '#f59e0b', '#8b5cf6', '#06b6d4'];
+  const colors = ['#f59e0b', '#3b82f6', '#22c55e', '#ef4444', '#8b5cf6', '#06b6d4'];
   return colors[index % colors.length];
 };
 

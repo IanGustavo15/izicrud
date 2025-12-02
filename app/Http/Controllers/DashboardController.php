@@ -11,6 +11,7 @@ use App\Models\Cliente;
 use App\Models\Peca;
 use App\Models\PecaServico;
 use App\Models\ServicoOrdemDeServico;
+use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
 {
@@ -24,6 +25,99 @@ class DashboardController extends Controller
         $pecaServico = PecaServico::where('deleted', 0)->orderBy('id', 'asc')->get();
         $ordemServico = OrdemDeServico::where('deleted', 0)->with('cliente')->with('veiculo')->orderBy('id', 'asc')->get();
         $servicoOrdemServico = ServicoOrdemDeServico::where('deleted', 0)->with('servico')->with('ordemdeservico')->orderBy('id', 'asc')->get();
+
+        // Utilizados no gráfico de Pizza/Donut
+        $totalEmAberto = OrdemDeServico::where('deleted', 0)->where('status', 1)->count();
+        $totalEmAndamento = OrdemDeServico::where('deleted', 0)->where('status', 2)->count();
+        $totalFinalizados = OrdemDeServico::where('deleted', 0)->where('status', 3)->count(); // Utilizado nas duas formas
+        $totalCancelados = OrdemDeServico::where('deleted', 0)->where('status', 4)->count();
+
+        $totalOrdemServico = OrdemDeServico::where('deleted', 0)->where('status', 1)->count() + OrdemDeServico::where('deleted', 0)->where('status', 2)->count() + OrdemDeServico::where('deleted', 0)->where('status', 4)->count(); // Todas que não estão finalizadas
+        // dd($totalFinalizados);
+        // dd($totalOrdemServico);
+
+        // Utilizados no gráfico de Linhas
+        $valorJun = 0;
+        $valorJul = 0;
+        $valorAgo = 0;
+        $valorSet = 0;
+        $valorOut = 0;
+        $valorNov = 0;
+        $valorDez = 0;
+
+
+        $junOrdemServico = DB::table('ordemdeservicos')->where('deleted', 0)->where('status', 3)->whereMonth('data_de_saida', 6)->whereYear('data_de_saida', 2025)->get();
+        foreach ($junOrdemServico as $serv) {
+            $valorJun = $valorJun + $serv->valor_total;
+        };
+        // dd($valorJun);
+        $junOrdemServicoCount = DB::table('ordemdeservicos')->where('deleted', 0)->where('status', 3)->whereMonth('data_de_saida', 6)->whereYear('data_de_saida', 2025)->count();
+
+
+        $julOrdemServico = DB::table('ordemdeservicos')->where('deleted', 0)->where('status', 3)->whereMonth('data_de_saida', 7)->whereYear('data_de_saida', 2025)->get();
+        foreach ($julOrdemServico as $serv) {
+            $valorJul = $valorJul + $serv->valor_total;
+        };
+        $julOrdemServicoCount = DB::table('ordemdeservicos')->where('deleted', 0)->where('status', 3)->whereMonth('data_de_saida', 7)->whereYear('data_de_saida', 2025)->count();
+
+
+        $agoOrdemServico = DB::table('ordemdeservicos')->where('deleted', 0)->where('status', 3)->whereMonth('data_de_saida', 8)->whereYear('data_de_saida', 2025)->get();
+        foreach ($agoOrdemServico as $serv) {
+            $valorAgo = $valorAgo + $serv->valor_total;
+        };
+        $agoOrdemServicoCount = DB::table('ordemdeservicos')->where('deleted', 0)->where('status', 3)->whereMonth('data_de_saida', 8)->whereYear('data_de_saida', 2025)->count();
+
+
+
+        $setOrdemServico = DB::table('ordemdeservicos')->where('deleted', 0)->where('status', 3)->whereMonth('data_de_saida', 9)->whereYear('data_de_saida', 2025)->get();
+        foreach ($setOrdemServico as $serv) {
+            $valorSet = $valorSet + $serv->valor_total;
+        };
+        // dd($valorSet);
+        $setOrdemServicoCount = DB::table('ordemdeservicos')->where('deleted', 0)->where('status', 3)->whereMonth('data_de_saida', 9)->whereYear('data_de_saida', 2025)->count();
+
+
+        $outOrdemServico = DB::table('ordemdeservicos')->where('deleted', 0)->where('status', 3)->whereMonth('data_de_saida', 10)->whereYear('data_de_saida', 2025)->get();
+        foreach ($outOrdemServico as $serv) {
+            $valorOut = $valorOut + $serv->valor_total;
+        };
+        $outOrdemServicoCount = DB::table('ordemdeservicos')->where('deleted', 0)->where('status', 3)->whereMonth('data_de_saida', 10)->whereYear('data_de_saida', 2025)->count();
+
+
+        $novOrdemServico = DB::table('ordemdeservicos')->where('deleted', 0)->where('status', 3)->whereMonth('data_de_saida', 11)->whereYear('data_de_saida', 2025)->get();
+        foreach ($novOrdemServico as $serv) {
+            $valorNov = $valorNov + $serv->valor_total;
+        };
+        $novOrdemServicoCount = DB::table('ordemdeservicos')->where('deleted', 0)->where('status', 3)->whereMonth('data_de_saida', 11)->whereYear('data_de_saida', 2025)->count();
+
+
+        $dezOrdemServico = DB::table('ordemdeservicos')->where('deleted', 0)->where('status', 3)->whereMonth('data_de_saida', 12)->whereYear('data_de_saida', 2025)->get();
+        foreach ($dezOrdemServico as $serv) {
+            $valorDez = $valorDez + $serv->valor_total;
+        };
+        $dezOrdemServicoCount = DB::table('ordemdeservicos')->where('deleted', 0)->where('status', 3)->whereMonth('data_de_saida', 12)->whereYear('data_de_saida', 2025)->count();
+
+
+        // dd($junOrdemServico);
+        // dd($junOrdemServicoCount);
+
+        // dd($julOrdemServico);
+        // dd($julOrdemServicoCount);
+
+        // dd($agoOrdemServico);
+        // dd($agoOrdemServicoCount);
+
+        // dd($setOrdemServico);
+        // dd($setOrdemServicoCount);
+
+        // dd($outOrdemServico);
+        // dd($outOrdemServicoCount);
+
+        // dd($novOrdemServico);
+        // dd($novOrdemServicoCount);
+
+        // dd($dezOrdemServico);
+        // dd($dezOrdemServicoCount);
 
         // dd($pecaServico);
         // dd($servicos);
@@ -57,6 +151,37 @@ class DashboardController extends Controller
                 'subtitle' => 'últimos 30 dias',
                 'variant' => 'default',
             ],
+        ];
+
+        // $categoriesData = [ // Forma de Finalizados + Outros
+        //     [
+        //         'label' => 'Finalizados',
+        //         'value' => $totalFinalizados
+        //     ],
+        //     [
+        //         'label' => 'Outros',
+        //         'value' => $totalOrdemServico
+        //     ],
+        // ];
+
+        $categoriesData = [ // Forma com todos os Status
+            [
+                'label' => 'Em Aberto',
+                'value' => $totalEmAberto
+            ],
+            [
+                'label' => 'Em Andamento',
+                'value' => $totalEmAndamento
+            ],
+            [
+                'label' => 'Finalizados',
+                'value' => $totalFinalizados
+            ],
+            [
+                'label' => 'Cancelados',
+                'value' => $totalCancelados
+            ],
+
         ];
 
         $topPerformersData = [
@@ -165,6 +290,7 @@ class DashboardController extends Controller
             'topPerformersData' => $topPerformersData,
             'servicesData' => $servicesData,
             'recentOrdersData' => $recentOrdersData,
+            'categoriesData' => $categoriesData,
         ]);
     }
 }

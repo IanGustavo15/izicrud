@@ -20,7 +20,6 @@ import { useDashboardData } from '@/composables/useDashboardData';
 
 const {
     statsData,
-    revenueChartData,
     usersChartData,
     topPerformersData,
     recentOrdersData,
@@ -62,10 +61,15 @@ const servicesColumns = [
     { key: 'status', label: 'Status' }
 ];
 
-const categoriesData = ref([
-    { label: 'Veterinários', value: 45 },
-    { label: 'Pets', value: 30 },
-    { label: 'Serviços', value: 25 }
+
+const revenueChartData = ref([
+    { label: 'Jun', value: 4200 },
+    { label: 'Jul', value: 3800 },
+    { label: 'Ago', value: 5200 },
+    { label: 'Set', value: 4800 },
+    { label: 'Out', value: 6100 },
+    { label: 'Nov', value: 5500 },
+    { label: 'Dez', value: 7200 }
 ]);
 
 
@@ -129,10 +133,9 @@ const props = defineProps<{
                             color="#10b981"
                     />
                     <SimpleChart
-                            title="Porcentagem de Serviços Finalizados"
+                            title="Ordens de Serviço"
                             type="donut"
-                            :data="categoriesData"
-                            :percentage="52"
+                            :data="props.categoriesData"
                             color="#8b56f6"
                     />
                 </div>
@@ -147,7 +150,6 @@ const props = defineProps<{
                         title="Ordens de Serviço Recentes"
                         :columns="ordersColumns"
                         :data="props.recentOrdersData"
-                        actions
                         show-pagination
                     />
 
@@ -156,9 +158,10 @@ const props = defineProps<{
                         title="Serviços Disponíveis"
                         :columns="servicesColumns"
                         :data="props.servicesData"
-                        actions
                         show-pagination
                     />
         </div>
     </AppLayout>
 </template>
+
+
