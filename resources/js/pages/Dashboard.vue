@@ -22,7 +22,6 @@ const {
     statsData,
     revenueChartData,
     usersChartData,
-    categoriesData,
     topPerformersData,
     recentOrdersData,
 } = useDashboardData();
@@ -62,6 +61,12 @@ const servicesColumns = [
     { key: 'agendamentos', label: 'Quantidade' },
     { key: 'status', label: 'Status' }
 ];
+
+const categoriesData = ref([
+    { label: 'Veterinários', value: 45 },
+    { label: 'Pets', value: 30 },
+    { label: 'Serviços', value: 25 }
+]);
 
 
 const props = defineProps<{
@@ -124,7 +129,7 @@ const props = defineProps<{
                             color="#10b981"
                     />
                     <SimpleChart
-                            title="Categorias"
+                            title="Porcentagem de Serviços Finalizados"
                             type="donut"
                             :data="categoriesData"
                             :percentage="52"
