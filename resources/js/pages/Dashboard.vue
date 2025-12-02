@@ -62,16 +62,6 @@ const servicesColumns = [
 ];
 
 
-const revenueChartData = ref([
-    { label: 'Jun', value: 4200 },
-    { label: 'Jul', value: 3800 },
-    { label: 'Ago', value: 5200 },
-    { label: 'Set', value: 4800 },
-    { label: 'Out', value: 6100 },
-    { label: 'Nov', value: 5500 },
-    { label: 'Dez', value: 7200 }
-]);
-
 
 const props = defineProps<{
     stats?: Array<{
@@ -122,7 +112,7 @@ const props = defineProps<{
                     <SimpleChart
                             title="Receita Mensal"
                             type="line"
-                            :data="revenueChartData"
+                            :data="props.revenueChartData"
                             color="#3b82f6"
                             show-legend
                     />

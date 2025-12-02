@@ -153,6 +153,46 @@ class DashboardController extends Controller
             ],
         ];
 
+//         const revenueChartData = ref([
+//     { label: 'Jun', value: 4200 },
+//     { label: 'Jul', value: 3800 },
+//     { label: 'Ago', value: 5200 },
+//     { label: 'Set', value: 4800 },
+//     { label: 'Out', value: 6100 },
+//     { label: 'Nov', value: 5500 },
+//     { label: 'Dez', value: 7200 }
+// ]);
+        $revenueChartData = [
+            [
+                'label' => 'Junho',
+                'value' => $valorJun
+            ],
+            [
+                'label' => 'Julho',
+                'value' => $valorJul
+            ],
+            [
+                'label' => 'Agosto',
+                'value' => $valorAgo
+            ],
+            [
+                'label' => 'Setembro',
+                'value' => $valorSet
+            ],
+            [
+                'label' => 'Outubro',
+                'value' => $valorOut
+            ],
+            [
+                'label' => 'Novembro',
+                'value' => $valorNov
+            ],
+            [
+                'label' => 'Dezembro',
+                'value' => $valorDez
+            ],
+        ];
+
         // $categoriesData = [ // Forma de Finalizados + Outros
         //     [
         //         'label' => 'Finalizados',
@@ -291,6 +331,7 @@ class DashboardController extends Controller
             'servicesData' => $servicesData,
             'recentOrdersData' => $recentOrdersData,
             'categoriesData' => $categoriesData,
+            'revenueChartData' => $revenueChartData,
         ]);
     }
 }
