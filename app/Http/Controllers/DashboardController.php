@@ -128,32 +128,32 @@ class DashboardController extends Controller
         $recentOrdersData = [
             [
                 'numero' => 'OS-' . $ordemServico[0]->id,
-                'pet' => $ordemServico[0]->cliente->nome,
-                'servico' => $servicoOrdemServico[0]->servico->descricao,
+                'pet' => $ordemServico[0]->cliente->nome . '/' . $ordemServico[0]->veiculo->modelo,
+                'servico' => $servicoOrdemServico[0]->servico->nome . ' - ' . $servicoOrdemServico[0]->servico->descricao,
                 'status'  => $ordemServico[0]->status,
                 'total' => $ordemServico[0]->valor_total,
                 'data'  =>'24/11/2024'
             ],
             [
                 'numero' => 'OS-' . $ordemServico[1]->id,
-                'pet' => $ordemServico[1]->cliente->nome,
-                'servico' => $servicoOrdemServico[1]->servico->descricao,
+                'pet' => $ordemServico[1]->cliente->nome . '/' . $ordemServico[1]->veiculo->modelo,
+                'servico' => $servicoOrdemServico[1]->servico->nome . ' - ' . $servicoOrdemServico[1]->servico->descricao,
                 'status'  => $ordemServico[1]->status,
                 'total' => $ordemServico[1]->valor_total,
                 'data'  =>'24/11/2024'
             ],
             [
                 'numero' => 'OS-' . $ordemServico[2]->id,
-                'pet' => $ordemServico[2]->cliente->nome,
-                'servico' => $servicoOrdemServico[2]->servico->descricao,
+                'pet' => $ordemServico[2]->cliente->nome . '/' . $ordemServico[2]->veiculo->modelo,
+                'servico' => $servicoOrdemServico[2]->servico->nome . ' - ' . $servicoOrdemServico[2]->servico->descricao,
                 'status'  => $ordemServico[2]->status,
                 'total' => $ordemServico[2]->valor_total,
                 'data'  =>'24/11/2024'
             ],
             [
                 'numero' => 'OS-' . $ordemServico[3]->id,
-                'pet' => $ordemServico[3]->cliente->nome,
-                'servico' => $servicoOrdemServico[3]->servico->descricao,
+                'pet' => $ordemServico[3]->cliente->nome . '/' . $ordemServico[3]->veiculo->modelo,
+                'servico' => $servicoOrdemServico[3]->servico->nome . ' - ' . $servicoOrdemServico[3]->servico->descricao,
                 'status'  => $ordemServico[3]->status,
                 'total' => $ordemServico[3]->valor_total,
                 'data'  =>'24/11/2024'

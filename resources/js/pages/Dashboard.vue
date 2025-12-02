@@ -49,7 +49,7 @@ const performersColumns = [
 
 const ordersColumns = [
     { key: 'numero', label: 'Ordem' },
-    { key: 'pet', label: 'Dono' },
+    { key: 'pet', label: 'Dono/Veículo' },
     { key: 'servico', label: 'Serviços' },
     { key: 'status', label: 'Status' },
     { key: 'total', label: 'Total' }
