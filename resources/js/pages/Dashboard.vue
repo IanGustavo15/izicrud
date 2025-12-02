@@ -41,26 +41,116 @@ interface DadosEstatistica {
 }
 
 const props = defineProps<{
-    dadosEstatisticas: DadosEstatistica[];
-    dadosGraficoReceita: PontoDadosGrafico[];
-    dadosGraficoUsuarios: PontoDadosGrafico[];
-    dadosCategorias: PontoDadosGrafico[];
-    dadosMelhoresProfissionais: {
+    dadosEstatisticas?: DadosEstatistica[];
+    dadosGraficoReceita?: PontoDadosGrafico[];
+    dadosGraficoUsuarios?: PontoDadosGrafico[];
+    dadosCategorias?: PontoDadosGrafico[];
+    dadosMelhoresProfissionais?: {
         columns: Coluna[];
         data: Record<string, any>[];
     };
-    dadosOrdensRecentes: {
+    dadosOrdensRecentes?: {
         columns: Coluna[];
         data: Record<string, any>[];
     };
-    dadosServicos: {
+    dadosServicos?: {
         columns: Coluna[];
         data: Record<string, any>[];
     };
-    receitaTotal: number;
-    valorMedioPedido: number;
-    servicosAtivos: number;
+    receitaTotal?: number;
+    valorMedioPedido?: number;
+    servicosAtivos?: number;
 }>();
+
+// Dados padrão/mock para quando não há dados do backend
+const dadosEstatisticasPadrao: DadosEstatistica[] = [
+    {
+        title: 'Total de Ordens',
+        value: '0',
+        change: '0%',
+        subtitle: 'todas as ordens',
+        variant: 'default'
+    },
+    {
+        title: 'Ordens (30 dias)',
+        value: 0,
+        change: '0%',
+        subtitle: 'últimos 30 dias',
+        variant: 'default'
+    },
+    {
+        title: 'Ordens Ativas',
+        value: 0,
+        change: '0%',
+        subtitle: 'pendentes + em andamento',
+        variant: 'default'
+    },
+    {
+        title: 'Processando',
+        value: 0,
+        change: '0%',
+        subtitle: 'em andamento',
+        variant: 'default'
+    }
+];
+
+const dadosGraficoReceitaPadrao: PontoDadosGrafico[] = [
+    { label: 'Jun', value: 0 },
+    { label: 'Jul', value: 0 },
+    { label: 'Ago', value: 0 },
+    { label: 'Set', value: 0 },
+    { label: 'Out', value: 0 },
+    { label: 'Nov', value: 0 },
+    { label: 'Dez', value: 0 }
+];
+
+const dadosGraficoUsuariosPadrao: PontoDadosGrafico[] = [
+    { label: 'Dom', value: 0 },
+    { label: 'Seg', value: 0 },
+    { label: 'Ter', value: 0 },
+    { label: 'Qua', value: 0 },
+    { label: 'Qui', value: 0 },
+    { label: 'Sex', value: 0 },
+    { label: 'Sab', value: 0 }
+];
+
+const dadosCategoriasPadrao: PontoDadosGrafico[] = [
+    { label: 'Cães', value: 0 },
+    { label: 'Gatos', value: 0 },
+    { label: 'Exóticos', value: 0 }
+];
+
+const dadosMelhoresProfissionaisPadrao = {
+    columns: [
+        { key: 'pet', label: 'Pet Atendido' },
+        { key: 'valor', label: 'Valor' },
+        { key: 'status', label: 'Status' },
+        { key: 'data', label: 'Data' }
+    ],
+    data: []
+};
+
+const dadosOrdensRecentesPadrao = {
+    columns: [
+        { key: 'numero', label: 'Ordem' },
+        { key: 'pet', label: 'Pet' },
+        { key: 'servico', label: 'Serviço' },
+        { key: 'status', label: 'Status' },
+        { key: 'total', label: 'Total' }
+    ],
+    data: []
+};
+
+const dadosServicosPadrao = {
+    columns: [
+        { key: 'nome', label: 'Serviço' },
+        { key: 'categoria', label: 'Categoria' },
+        { key: 'preco', label: 'Preço' },
+        { key: 'agendamentos', label: 'Agendamentos' },
+        { key: 'status', label: 'Status' }
+    ],
+    data: []
+};
 
 // Funções para ações das tabelas de ordens
 const editarOrdem = (ordem: Record<string, any>) => {
@@ -137,7 +227,7 @@ function excluirServicoConfirmado(): void {
         <div class="flex h-full flex-1 flex-col gap-6 overflow-x-auto p-4">
             <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                 <StatsCard
-                    v-for="(stat, index) in props.dadosEstatisticas"
+                    v-for="(stat, index) in (props.dadosEstatisticas || dadosEstatisticasPadrao)"
                     :key="index"
                     :title="stat.title"
                     :value="stat.value"
@@ -151,7 +241,7 @@ function excluirServicoConfirmado(): void {
                 <SimpleChart
                     title="Receita Mensal"
                     type="line"
-                    :data="props.dadosGraficoReceita"
+                    :data="props.dadosGraficoReceita || dadosGraficoReceitaPadrao"
                     color="#3b82f6"
                     show-legend
                 />
@@ -159,14 +249,14 @@ function excluirServicoConfirmado(): void {
                 <SimpleChart
                     title="Novos Usuários"
                     type="bar"
-                    :data="props.dadosGraficoUsuarios"
+                    :data="props.dadosGraficoUsuarios || dadosGraficoUsuariosPadrao"
                     color="#10b981"
                 />
 
                 <SimpleChart
                     title="Distribuição por Categorias"
                     type="donut"
-                    :data="props.dadosCategorias"
+                    :data="props.dadosCategorias || dadosCategoriasPadrao"
                     color="#8b5cf6"
                     show-legend
                 />
@@ -175,8 +265,8 @@ function excluirServicoConfirmado(): void {
             <div class="grid gap-4 lg:grid-cols-2">
                 <DashTable
                     title="Últimas Ordens Concluídas"
-                    :columns="props.dadosMelhoresProfissionais.columns"
-                    :data="props.dadosMelhoresProfissionais.data"
+                    :columns="(props.dadosMelhoresProfissionais || dadosMelhoresProfissionaisPadrao).columns"
+                    :data="(props.dadosMelhoresProfissionais || dadosMelhoresProfissionaisPadrao).data"
                     :show-pagination="true"
                     :items-per-page="4"
                     :actions="true"
@@ -186,8 +276,8 @@ function excluirServicoConfirmado(): void {
 
                 <DashTable
                     title="Ordens Recentes"
-                    :columns="props.dadosOrdensRecentes.columns"
-                    :data="props.dadosOrdensRecentes.data"
+                    :columns="(props.dadosOrdensRecentes || dadosOrdensRecentesPadrao).columns"
+                    :data="(props.dadosOrdensRecentes || dadosOrdensRecentesPadrao).data"
                     :actions="true"
                     :items-per-page="4"
                     @edit="editarOrdem"
@@ -197,8 +287,8 @@ function excluirServicoConfirmado(): void {
 
             <DashTable
                 title="Serviços Populares"
-                :columns="props.dadosServicos.columns"
-                :data="props.dadosServicos.data"
+                :columns="(props.dadosServicos || dadosServicosPadrao).columns"
+                :data="(props.dadosServicos || dadosServicosPadrao).data"
                 :show-pagination="true"
                 :actions="true"
                 :items-per-page="5"
