@@ -4,52 +4,100 @@ import { dashboard } from '@/routes';
 import { type BreadcrumbItem } from '@/types';
 import { Head } from '@inertiajs/vue3';
 
-// dash components
+// Componentes do dashboard
 import StatsCard from '@/components/dashboard/StatsCard.vue';
 import SimpleChart from '@/components/dashboard/SimpleChart.vue';
 import DashTable from '@/components/dashboard/DashTable.vue';
-import WelcomeCard from '@/components/dashboard/WelcomeCard.vue';
-import FeatureCard from '@/components/dashboard/FeatureCard.vue';
-import ExampleSystem from '@/components/dashboard/ExampleSystem.vue';
-
-// mock data
-import { useDashboardData } from '@/composables/useDashboardData';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
-        title: 'Dashboard',
+        title: 'Painel',
         href: dashboard().url,
     },
 ];
 
-// load mock data
-const {
-    statsData,
-    revenueChartData,
-    usersChartData,
-    categoriesData,
-    topPerformersData,
-    recentOrdersData,
-    servicesData,
-    performersColumns,
-    ordersColumns,
-    servicesColumns,
-    totalRevenue,
-    averageOrderValue,
-    activeServices
-} = useDashboardData();
+// Interface para props vindas do controller
+interface PontoDadosGrafico {
+    label: string;
+    value: number;
+}
+
+interface Coluna {
+    key: string;
+    label: string;
+}
+
+interface DadosEstatistica {
+    title: string;
+    value: string | number;
+    change?: string;
+    subtitle?: string;
+    variant?: 'default' | 'success' | 'warning' | 'danger';
+}
+
+const props = defineProps<{
+    dadosEstatisticas: DadosEstatistica[];
+    dadosGraficoReceita: PontoDadosGrafico[];
+    dadosGraficoUsuarios: PontoDadosGrafico[];
+    dadosCategorias: PontoDadosGrafico[];
+    dadosMelhoresProfissionais: {
+        columns: Coluna[];
+        data: Record<string, any>[];
+    };
+    dadosOrdensRecentes: {
+        columns: Coluna[];
+        data: Record<string, any>[];
+    };
+    dadosServicos: {
+        columns: Coluna[];
+        data: Record<string, any>[];
+    };
+    receitaTotal: number;
+    valorMedioPedido: number;
+    servicosAtivos: number;
+}>();
+
+// Funções para ações das tabelas
+const visualizarOrdem = (ordem: Record<string, any>) => {
+    console.log('Visualizando ordem:', ordem);
+    alert(`Visualizando ordem: ${ordem.cliente || ordem.id}`);
+};
+
+const editarOrdem = (ordem: Record<string, any>) => {
+    console.log('Editando ordem:', ordem);
+    alert(`Editando ordem: ${ordem.cliente || ordem.id}`);
+};
+
+const excluirOrdem = (ordem: Record<string, any>) => {
+    console.log('Excluindo ordem:', ordem);
+    alert(`Ordem excluída: ${ordem.cliente || ordem.id}`);
+};
+
+const visualizarServico = (servico: Record<string, any>) => {
+    console.log('Visualizando serviço:', servico);
+    alert(`Visualizando serviço: ${servico.nome || servico.name || servico.id}`);
+};
+
+const editarServico = (servico: Record<string, any>) => {
+    console.log('Editando serviço:', servico);
+    alert(`Editando serviço: ${servico.nome || servico.name || servico.id}`);
+};
+
+const excluirServico = (servico: Record<string, any>) => {
+    console.log('Excluindo serviço:', servico);
+    alert(`Serviço excluído: ${servico.nome || servico.name || servico.id}`);
+};
 </script>
 
 <template>
-    <Head title="Dashboard" />
+    <Head title="Painel" />
 
     <AppLayout :breadcrumbs="breadcrumbs">
         <div class="flex h-full flex-1 flex-col gap-6 overflow-x-auto p-4">
-            <!-- <WelcomeCard user-name="Desenvolvedor" /> -->
 
             <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                 <StatsCard
-                    v-for="(stat, index) in statsData"
+                    v-for="(stat, index) in props.dadosEstatisticas"
                     :key="index"
                     :title="stat.title"
                     :value="stat.value"
@@ -59,12 +107,11 @@ const {
                 />
             </div>
 
-            <!-- Charts Row -->
             <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                 <SimpleChart
                     title="Receita Mensal"
                     type="line"
-                    :data="revenueChartData"
+                    :data="props.dadosGraficoReceita"
                     color="#3b82f6"
                     show-legend
                 />
@@ -72,77 +119,52 @@ const {
                 <SimpleChart
                     title="Novos Usuários"
                     type="bar"
-                    :data="usersChartData"
+                    :data="props.dadosGraficoUsuarios"
                     color="#10b981"
                 />
 
                 <SimpleChart
-                    title="Meta do Mês"
+                    title="Distribuição por Categorias"
                     type="donut"
-                    :data="categoriesData"
-                    :percentage="73"
+                    :data="props.dadosCategorias"
                     color="#8b5cf6"
+                    show-legend
                 />
             </div>
 
             <div class="grid gap-4 lg:grid-cols-2">
                 <DashTable
                     title="Melhores Profissionais"
-                    :columns="performersColumns"
-                    :data="topPerformersData"
-                    show-pagination
+                    :columns="props.dadosMelhoresProfissionais.columns"
+                    :data="props.dadosMelhoresProfissionais.data"
+                    :show-pagination="true"
+                    :items-per-page="3"
                 />
 
                 <DashTable
                     title="Ordens Recentes"
-                    :columns="ordersColumns"
-                    :data="recentOrdersData"
-                    actions
+                    :columns="props.dadosOrdensRecentes.columns"
+                    :data="props.dadosOrdensRecentes.data"
+                    :actions="true"
+                    :items-per-page="4"
+                    @view="visualizarOrdem"
+                    @edit="editarOrdem"
+                    @delete="excluirOrdem"
                 />
             </div>
 
             <DashTable
                 title="Serviços Populares"
-                :columns="servicesColumns"
-                :data="servicesData"
-                show-pagination
-                actions
+                :columns="props.dadosServicos.columns"
+                :data="props.dadosServicos.data"
+                :show-pagination="true"
+                :actions="true"
+                :items-per-page="5"
+                @view="visualizarServico"
+                @edit="editarServico"
+                @delete="excluirServico"
             />
 
-            <!-- Example System -->
-            <!-- <ExampleSystem /> -->
-
-            <!-- Additional Stats & Features -->
-            <!-- Stats Cards -->
-            <!-- <div class="grid gap-4 md:grid-cols-4"> -->
-                <!-- <div class="rounded-xl border border-sidebar-border/70 bg-white p-6 shadow-sm dark:border-sidebar-border dark:bg-sidebar-accent">
-                    <div class="text-center">
-                        <p class="text-2xl font-bold text-green-600">R$ {{ totalRevenue.toLocaleString('pt-BR') }}</p>
-                        <p class="text-sm text-muted-foreground">Receita Total</p>
-                    </div>
-                </div>
-                <div class="rounded-xl border border-sidebar-border/70 bg-white p-6 shadow-sm dark:border-sidebar-border dark:bg-sidebar-accent">
-                    <div class="text-center">
-                        <p class="text-2xl font-bold text-blue-600">R$ {{ averageOrderValue.toFixed(2) }}</p>
-                        <p class="text-sm text-muted-foreground">Ticket Médio</p>
-                    </div>
-                </div>
-                <div class="rounded-xl border border-sidebar-border/70 bg-white p-6 shadow-sm dark:border-sidebar-border dark:bg-sidebar-accent">
-                    <div class="text-center">
-                        <p class="text-2xl font-bold text-purple-600">{{ activeServices }}</p>
-                        <p class="text-sm text-muted-foreground">Serviços Ativos</p>
-                    </div>
-                </div> -->
-
-                <!-- Feature Card -->
-                <!-- <FeatureCard
-                    title="CRUD Generator"
-                    description="Crie CRUDs completos em segundos"
-                    :features="['Relacionamentos 1:N', 'Interface Rica', 'Soft Delete']"
-                    button-text="Começar Agora"
-                    @action="console.log('Iniciar CRUD Generator')"
-                /> -->
-            <!-- </div> -->
         </div>
     </AppLayout>
 </template>

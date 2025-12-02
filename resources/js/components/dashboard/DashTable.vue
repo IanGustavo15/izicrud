@@ -18,13 +18,16 @@
             >
               {{ column.label }}
             </th>
+            <th v-if="actions" class="px-6 py-3 text-sm font-medium text-muted-foreground text-center">
+              Ações
+            </th>
           </tr>
         </thead>
         <tbody class="divide-y divide-sidebar-border/70 dark:divide-sidebar-border">
           <tr
-            v-for="(row, index) in data"
+            v-for="(row, index) in paginatedData"
             :key="index"
-            class="group hover:bg-sidebar-accent/50"
+            class="group hover:bg-sidebar-accent/50 transition-colors duration-150"
           >
             <td
               v-for="column in columns"
@@ -43,7 +46,7 @@
                   class="h-2 w-2 rounded-full"
                   :class="getStatusColor(row[column.key])"
                 ></div>
-                <span class="text-sm">{{ row[column.key] }}</span>
+                <span class="text-sm capitalize">{{ row[column.key] }}</span>
               </div>
 
               <div v-else-if="column.key === 'value' || column.key === 'total' || column.key === 'preco'" class="font-mono text-sm">
@@ -78,29 +81,49 @@
                 </span>
               </div>
 
-              <div v-else-if="column.key === 'actions'" class="flex items-center gap-2">
-                <button class="rounded p-1 text-muted-foreground hover:text-foreground hover:bg-sidebar-accent">
+              <div v-else class="text-sm">
+                {{ row[column.key] }}
+              </div>
+            </td>
+
+            <!-- Coluna de Ações -->
+            <td v-if="actions" class="px-6 py-4">
+              <div class="flex items-center justify-center gap-1">
+                <button
+                  @click="handleView(row)"
+                  class="rounded p-1.5 text-muted-foreground hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors duration-150"
+                  title="Visualizar"
+                >
                   <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                   </svg>
                 </button>
-                <button class="rounded p-1 text-muted-foreground hover:text-foreground hover:bg-sidebar-accent">
+                <button
+                  @click="handleEdit(row)"
+                  class="rounded p-1.5 text-muted-foreground hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors duration-150"
+                  title="Editar"
+                >
                   <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                   </svg>
                 </button>
-              </div>
-
-              <div v-else class="text-sm">
-                {{ row[column.key] }}
+                <button
+                  @click="handleDelete(row)"
+                  class="rounded p-1.5 text-muted-foreground hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors duration-150"
+                  title="Excluir"
+                >
+                  <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                </button>
               </div>
             </td>
           </tr>
         </tbody>
       </table>
 
-      <div v-if="data.length === 0" class="p-8 text-center text-muted-foreground">
+      <div v-if="paginatedData.length === 0" class="p-8 text-center text-muted-foreground">
         <svg class="mx-auto h-12 w-12 mb-4 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
         </svg>
@@ -108,15 +131,55 @@
       </div>
     </div>
 
-    <div v-if="showPagination" class="border-t border-sidebar-border/70 px-6 py-4 dark:border-sidebar-border">
+    <div v-if="showPagination && totalPages > 1" class="border-t border-sidebar-border/70 px-6 py-4 dark:border-sidebar-border">
       <div class="flex items-center justify-between text-sm text-muted-foreground">
-        <span>Mostrando {{ data.length }} resultados</span>
+        <span>Mostrando {{ showingFrom }} a {{ showingTo }} de {{ totalItems }} resultados</span>
         <div class="flex items-center gap-2">
-          <button class="rounded px-2 py-1 hover:bg-sidebar-accent disabled:opacity-50" disabled>
+          <button
+            @click="previousPage"
+            :disabled="!canGoPrevious"
+            class="rounded px-3 py-1 hover:bg-sidebar-accent disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-150"
+          >
             Anterior
           </button>
-          <span class="px-2">1</span>
-          <button class="rounded px-2 py-1 hover:bg-sidebar-accent disabled:opacity-50" disabled>
+
+          <!-- Páginas -->
+          <div class="flex items-center gap-1">
+            <template v-for="page in Math.min(totalPages, 5)" :key="page">
+              <button
+                @click="goToPage(page)"
+                :class="[
+                  'rounded px-2 py-1 transition-colors duration-150',
+                  page === currentPage
+                    ? 'bg-blue-500 text-white'
+                    : 'hover:bg-sidebar-accent'
+                ]"
+              >
+                {{ page }}
+              </button>
+            </template>
+
+            <span v-if="totalPages > 5" class="px-2">...</span>
+
+            <button
+              v-if="totalPages > 5 && currentPage < totalPages - 2"
+              @click="goToPage(totalPages)"
+              :class="[
+                'rounded px-2 py-1 transition-colors duration-150',
+                totalPages === currentPage
+                  ? 'bg-blue-500 text-white'
+                  : 'hover:bg-sidebar-accent'
+              ]"
+            >
+              {{ totalPages }}
+            </button>
+          </div>
+
+          <button
+            @click="nextPage"
+            :disabled="!canGoNext"
+            class="rounded px-3 py-1 hover:bg-sidebar-accent disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-150"
+          >
             Próximo
           </button>
         </div>
@@ -126,6 +189,8 @@
 </template>
 
 <script setup lang="ts">
+import { computed, ref } from 'vue';
+
 interface Column {
   key: string;
   label: string;
@@ -137,35 +202,108 @@ interface Props {
   data: Record<string, any>[];
   actions?: boolean;
   showPagination?: boolean;
+  itemsPerPage?: number;
 }
 
 const props = withDefaults(defineProps<Props>(), {
   actions: false,
-  showPagination: false
+  showPagination: false,
+  itemsPerPage: 5
 });
 
+// Emit para ações
+const emit = defineEmits(['view', 'edit', 'delete']);
+
+// Estado da paginação
+const currentPage = ref(1);
+
+// Computed properties para paginação
+const totalPages = computed(() => Math.ceil(props.data.length / props.itemsPerPage));
+const totalItems = computed(() => props.data.length);
+
+const paginatedData = computed(() => {
+  if (!props.showPagination) return props.data;
+
+  const start = (currentPage.value - 1) * props.itemsPerPage;
+  const end = start + props.itemsPerPage;
+  return props.data.slice(start, end);
+});
+
+const showingFrom = computed(() => {
+  if (props.data.length === 0) return 0;
+  return (currentPage.value - 1) * props.itemsPerPage + 1;
+});
+
+const showingTo = computed(() => {
+  const to = currentPage.value * props.itemsPerPage;
+  return Math.min(to, props.data.length);
+});
+
+const canGoPrevious = computed(() => currentPage.value > 1);
+const canGoNext = computed(() => currentPage.value < totalPages.value);
+
+// Funções de navegação
+const goToPage = (page: number) => {
+  if (page >= 1 && page <= totalPages.value) {
+    currentPage.value = page;
+  }
+};
+
+const previousPage = () => {
+  if (canGoPrevious.value) {
+    currentPage.value--;
+  }
+};
+
+const nextPage = () => {
+  if (canGoNext.value) {
+    currentPage.value++;
+  }
+};
+
+// Funções de ações
+const handleView = (item: Record<string, any>) => {
+  emit('view', item);
+};
+
+const handleEdit = (item: Record<string, any>) => {
+  emit('edit', item);
+};
+
+const handleDelete = (item: Record<string, any>) => {
+  if (confirm('Tem certeza que deseja excluir este item?')) {
+    emit('delete', item);
+  }
+};
+
+// Funções auxiliares
 const getInitials = (name: string) => {
-  return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+  return name
+    .split(' ')
+    .map((n) => n[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2);
 };
 
 const getStatusColor = (status: string) => {
-  const colors = {
-    'ativo': 'bg-green-500',
-    'inativo': 'bg-red-500',
-    'pendente': 'bg-yellow-500',
-    'concluído': 'bg-green-500',
-    'cancelado': 'bg-red-500',
-    'em_andamento': 'bg-blue-500'
+  const statusColors: Record<string, string> = {
+    ativo: 'bg-green-500',
+    inativo: 'bg-red-500',
+    pendente: 'bg-yellow-500',
+    online: 'bg-green-500',
+    offline: 'bg-red-500'
   };
-  return colors[status as keyof typeof colors] || 'bg-gray-500';
+
+  return statusColors[status?.toLowerCase()] || 'bg-gray-500';
 };
 
-const formatCurrency = (value: number) => {
-  if (typeof value !== 'number') return value;
+const formatCurrency = (value: number | string) => {
+  const numValue = typeof value === 'string' ? parseFloat(value) : value;
   return new Intl.NumberFormat('pt-BR', {
     style: 'currency',
     currency: 'BRL'
-  }).format(value);
+  }).format(numValue || 0);
 };
 
 const getTrendColor = (trend: number) => {
