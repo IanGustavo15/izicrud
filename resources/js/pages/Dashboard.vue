@@ -2,12 +2,17 @@
 import AppLayout from '@/layouts/AppLayout.vue';
 import { dashboard } from '@/routes';
 import { type BreadcrumbItem } from '@/types';
-import { Head } from '@inertiajs/vue3';
+import { Head, router } from '@inertiajs/vue3';
+import { ref } from 'vue';
 
 // Componentes do dashboard
 import StatsCard from '@/components/dashboard/StatsCard.vue';
 import SimpleChart from '@/components/dashboard/SimpleChart.vue';
 import DashTable from '@/components/dashboard/DashTable.vue';
+
+// Componentes para modais
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -57,36 +62,72 @@ const props = defineProps<{
     servicosAtivos: number;
 }>();
 
-// Funções para ações das tabelas
-const visualizarOrdem = (ordem: Record<string, any>) => {
-    console.log('Visualizando ordem:', ordem);
-    alert(`Visualizando ordem: ${ordem.cliente || ordem.id}`);
-};
-
+// Funções para ações das tabelas de ordens
 const editarOrdem = (ordem: Record<string, any>) => {
-    console.log('Editando ordem:', ordem);
-    alert(`Editando ordem: ${ordem.cliente || ordem.id}`);
+    // Redirecionar para edição usando o mesmo padrão do módulo original
+    router.visit(`/ordemservico/${ordem.id}/edit`);
 };
 
 const excluirOrdem = (ordem: Record<string, any>) => {
-    console.log('Excluindo ordem:', ordem);
-    alert(`Ordem excluída: ${ordem.cliente || ordem.id}`);
+    // Confirmar exclusão usando modal como no módulo original
+    confirmarExclusaoOrdem(ordem.id);
 };
 
-const visualizarServico = (servico: Record<string, any>) => {
-    console.log('Visualizando serviço:', servico);
-    alert(`Visualizando serviço: ${servico.nome || servico.name || servico.id}`);
-};
-
+// Funções para ações das tabelas de serviços
 const editarServico = (servico: Record<string, any>) => {
-    console.log('Editando serviço:', servico);
-    alert(`Editando serviço: ${servico.nome || servico.name || servico.id}`);
+    // Redirecionar para edição do serviço
+    router.visit(`/servico/${servico.id}/edit`);
 };
 
 const excluirServico = (servico: Record<string, any>) => {
-    console.log('Excluindo serviço:', servico);
-    alert(`Serviço excluído: ${servico.nome || servico.name || servico.id}`);
+    // Confirmar exclusão de serviço
+    confirmarExclusaoServico(servico.id);
 };
+
+// Estados para modais
+const showDeleteDialog = ref(false);
+const showDeleteServicoDialog = ref(false);
+const itemToDelete = ref<number | null>(null);
+const servicoToDelete = ref<number | null>(null);
+
+// Funções para modais e alertas
+function confirmarExclusaoOrdem(itemId: number): void {
+    itemToDelete.value = itemId;
+    showDeleteDialog.value = true;
+}
+
+function confirmarExclusaoServico(servicoId: number): void {
+    servicoToDelete.value = servicoId;
+    showDeleteServicoDialog.value = true;
+}
+
+function excluirOrdemConfirmada(): void {
+    if (itemToDelete.value !== null) {
+        router.delete(`/ordemservico/${itemToDelete.value}`, {
+            onSuccess: () => {
+                showDeleteDialog.value = false;
+                itemToDelete.value = null;
+            },
+            onError: () => {
+                showDeleteDialog.value = false;
+            },
+        });
+    }
+}
+
+function excluirServicoConfirmado(): void {
+    if (servicoToDelete.value !== null) {
+        router.delete(`/servico/${servicoToDelete.value}`, {
+            onSuccess: () => {
+                showDeleteServicoDialog.value = false;
+                servicoToDelete.value = null;
+            },
+            onError: () => {
+                showDeleteServicoDialog.value = false;
+            },
+        });
+    }
+}
 </script>
 
 <template>
@@ -94,7 +135,6 @@ const excluirServico = (servico: Record<string, any>) => {
 
     <AppLayout :breadcrumbs="breadcrumbs">
         <div class="flex h-full flex-1 flex-col gap-6 overflow-x-auto p-4">
-
             <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                 <StatsCard
                     v-for="(stat, index) in props.dadosEstatisticas"
@@ -134,11 +174,14 @@ const excluirServico = (servico: Record<string, any>) => {
 
             <div class="grid gap-4 lg:grid-cols-2">
                 <DashTable
-                    title="Melhores Profissionais"
+                    title="Últimas Ordens Concluídas"
                     :columns="props.dadosMelhoresProfissionais.columns"
                     :data="props.dadosMelhoresProfissionais.data"
                     :show-pagination="true"
-                    :items-per-page="3"
+                    :items-per-page="4"
+                    :actions="true"
+                    @edit="editarOrdem"
+                    @delete="excluirOrdem"
                 />
 
                 <DashTable
@@ -147,7 +190,6 @@ const excluirServico = (servico: Record<string, any>) => {
                     :data="props.dadosOrdensRecentes.data"
                     :actions="true"
                     :items-per-page="4"
-                    @view="visualizarOrdem"
                     @edit="editarOrdem"
                     @delete="excluirOrdem"
                 />
@@ -160,11 +202,42 @@ const excluirServico = (servico: Record<string, any>) => {
                 :show-pagination="true"
                 :actions="true"
                 :items-per-page="5"
-                @view="visualizarServico"
                 @edit="editarServico"
                 @delete="excluirServico"
             />
 
         </div>
+
+        <!-- Modal de confirmação de exclusão de Ordem -->
+        <Dialog v-model:open="showDeleteDialog">
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Confirmar Exclusão</DialogTitle>
+                    <DialogDescription>
+                        Tem certeza de que deseja excluir esta ordem de serviço? Esta ação não pode ser desfeita.
+                    </DialogDescription>
+                </DialogHeader>
+                <DialogFooter>
+                    <Button variant="outline" @click="showDeleteDialog = false">Cancelar</Button>
+                    <Button variant="destructive" @click="excluirOrdemConfirmada">Excluir</Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+
+        <!-- Modal de confirmação de exclusão de Serviço -->
+        <Dialog v-model:open="showDeleteServicoDialog">
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Confirmar Exclusão</DialogTitle>
+                    <DialogDescription>
+                        Tem certeza de que deseja excluir este serviço? Esta ação não pode ser desfeita.
+                    </DialogDescription>
+                </DialogHeader>
+                <DialogFooter>
+                    <Button variant="outline" @click="showDeleteServicoDialog = false">Cancelar</Button>
+                    <Button variant="destructive" @click="excluirServicoConfirmado">Excluir</Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
     </AppLayout>
 </template>

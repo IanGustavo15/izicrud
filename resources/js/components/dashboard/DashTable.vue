@@ -1,3 +1,35 @@
+<!--
+  DashTable Component
+
+  Componente de tabela reutilizável para dashboard com:
+  - Paginação opcional
+  - Ações customizáveis (slot)
+  - Botões padrão: Editar e Excluir
+  - Formatação automática de moeda, status e trends
+
+  Exemplo de uso com botões customizados:
+
+  <DashTable
+    title="Minha Tabela"
+    :columns="columns"
+    :data="data"
+    :actions="true"
+    @edit="handleEdit"
+    @delete="handleDelete"
+  >
+    <template #actions="{ item, index }">
+      <button @click="visualizar(item)" title="Ver Detalhes">
+        <EyeIcon class="h-4 w-4" />
+      </button>
+      <button @click="handleEdit(item)" title="Editar">
+        <PencilIcon class="h-4 w-4" />
+      </button>
+      <button @click="handleDelete(item)" title="Excluir">
+        <TrashIcon class="h-4 w-4" />
+      </button>
+    </template>
+  </DashTable>
+-->
 <template>
   <div class="rounded-xl border border-sidebar-border/70 bg-white shadow-sm dark:border-sidebar-border dark:bg-sidebar-accent">
     <div class="flex items-center justify-between p-6 pb-4">
@@ -8,17 +40,18 @@
     </div>
 
     <div class="overflow-x-auto">
-      <table class="w-full">
+      <table class="w-full table-fixed">
         <thead class="border-t border-sidebar-border/70 dark:border-sidebar-border">
           <tr class="text-left">
             <th
               v-for="column in columns"
               :key="column.key"
-              class="px-6 py-3 text-sm font-medium text-muted-foreground"
+              class="px-6 py-3 text-sm font-medium text-muted-foreground truncate"
+              :class="getColumnWidth(column.key)"
             >
               {{ column.label }}
             </th>
-            <th v-if="actions" class="px-6 py-3 text-sm font-medium text-muted-foreground text-center">
+            <th v-if="actions" class="w-24 px-6 py-3 text-sm font-medium text-muted-foreground text-center">
               Ações
             </th>
           </tr>
@@ -33,23 +66,24 @@
               v-for="column in columns"
               :key="`${index}-${column.key}`"
               class="px-6 py-4"
+              :class="getColumnWidth(column.key)"
             >
-              <div v-if="column.key === 'avatar' && row[column.key]" class="flex items-center gap-3">
-                <div class="h-8 w-8 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white text-sm font-medium">
-                  {{ getInitials(row.name || row.nome || 'U') }}
+              <div v-if="column.key === 'avatar' && row[column.key]" class="flex items-center gap-3 min-w-0">
+                <div class="h-8 w-8 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white text-sm font-medium flex-shrink-0">
+                  {{ getInitials(row.numero || row.name || row.nome || 'OS') }}
                 </div>
-                <span class="font-medium">{{ row.name || row.nome }}</span>
+                <span class="font-medium truncate">{{ row.numero || row.name || row.nome }}</span>
               </div>
 
-              <div v-else-if="column.key === 'status'" class="flex items-center gap-2">
+              <div v-else-if="column.key === 'status'" class="flex items-center gap-2 min-w-0">
                 <div
-                  class="h-2 w-2 rounded-full"
+                  class="h-2 w-2 rounded-full flex-shrink-0"
                   :class="getStatusColor(row[column.key])"
                 ></div>
-                <span class="text-sm capitalize">{{ row[column.key] }}</span>
+                <span class="text-sm capitalize truncate">{{ row[column.key] }}</span>
               </div>
 
-              <div v-else-if="column.key === 'value' || column.key === 'total' || column.key === 'preco'" class="font-mono text-sm">
+              <div v-else-if="column.key === 'value' || column.key === 'total' || column.key === 'preco' || column.key === 'valor'" class="font-mono text-sm text-right">
                 {{ formatCurrency(row[column.key]) }}
               </div>
 
@@ -81,42 +115,36 @@
                 </span>
               </div>
 
-              <div v-else class="text-sm">
+              <div v-else class="text-sm truncate" :title="row[column.key]">
                 {{ row[column.key] }}
               </div>
             </td>
 
             <!-- Coluna de Ações -->
-            <td v-if="actions" class="px-6 py-4">
+            <td v-if="actions" class="w-24 px-6 py-4">
               <div class="flex items-center justify-center gap-1">
-                <button
-                  @click="handleView(row)"
-                  class="rounded p-1.5 text-muted-foreground hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors duration-150"
-                  title="Visualizar"
-                >
-                  <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                  </svg>
-                </button>
-                <button
-                  @click="handleEdit(row)"
-                  class="rounded p-1.5 text-muted-foreground hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors duration-150"
-                  title="Editar"
-                >
-                  <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                  </svg>
-                </button>
-                <button
-                  @click="handleDelete(row)"
-                  class="rounded p-1.5 text-muted-foreground hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors duration-150"
-                  title="Excluir"
-                >
-                  <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                  </svg>
-                </button>
+                <!-- Slot para ações customizadas -->
+                <slot name="actions" :item="row" :index="index">
+                  <!-- Botões padrão: Editar e Excluir -->
+                  <button
+                    @click="handleEdit(row)"
+                    class="rounded p-1.5 text-muted-foreground hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors duration-150"
+                    title="Editar"
+                  >
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                  </button>
+                  <button
+                    @click="handleDelete(row)"
+                    class="rounded p-1.5 text-muted-foreground hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors duration-150"
+                    title="Excluir"
+                  >
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                  </button>
+                </slot>
               </div>
             </td>
           </tr>
@@ -212,7 +240,7 @@ const props = withDefaults(defineProps<Props>(), {
 });
 
 // Emit para ações
-const emit = defineEmits(['view', 'edit', 'delete']);
+const emit = defineEmits(['edit', 'delete']);
 
 // Estado da paginação
 const currentPage = ref(1);
@@ -262,21 +290,38 @@ const nextPage = () => {
 };
 
 // Funções de ações
-const handleView = (item: Record<string, any>) => {
-  emit('view', item);
-};
-
 const handleEdit = (item: Record<string, any>) => {
   emit('edit', item);
 };
 
 const handleDelete = (item: Record<string, any>) => {
-  if (confirm('Tem certeza que deseja excluir este item?')) {
-    emit('delete', item);
-  }
+  emit('delete', item);
 };
 
 // Funções auxiliares
+const getColumnWidth = (key: string) => {
+  const widthMap: Record<string, string> = {
+    avatar: 'w-1/3', // Coluna principal (nome/título)
+    numero: 'w-1/3',
+    nome: 'w-1/3',
+    name: 'w-1/3',
+    pet: 'w-1/4',
+    cliente: 'w-1/4',
+    servico: 'w-1/4',
+    categoria: 'w-1/5',
+    status: 'w-20',
+    data: 'w-24',
+    valor: 'w-24',
+    value: 'w-24',
+    total: 'w-24',
+    preco: 'w-24',
+    agendamentos: 'w-20',
+    trend: 'w-16'
+  };
+
+  return widthMap[key] || 'w-auto';
+};
+
 const getInitials = (name: string) => {
   return name
     .split(' ')
