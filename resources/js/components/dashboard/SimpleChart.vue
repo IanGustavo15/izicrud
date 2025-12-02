@@ -29,14 +29,29 @@
         <!-- Line -->
         <path :d="linePath" :stroke="color" stroke-width="2" fill="none" />
 
-        <!-- Points -->
+        <!-- Points com hover -->
         <circle
           v-for="(point, index) in chartData"
           :key="index"
-          :cx="(index * (400 / (chartData.length - 1)))"
+          :cx="chartData.length <= 1 ? 200 : (index * (400 / Math.max(1, chartData.length - 1)))"
           :cy="200 - (point.value / maxValue * 180 + 10)"
-          r="3"
+          r="4"
           :fill="color"
+          class="cursor-pointer transition-all duration-200 hover:r-6"
+          @mouseenter="showTooltip($event, point)"
+          @mouseleave="hideTooltip"
+        />
+        <!-- Áreas invisíveis para melhor hover -->
+        <circle
+          v-for="(point, index) in chartData"
+          :key="`hover-${index}`"
+          :cx="chartData.length <= 1 ? 200 : (index * (400 / Math.max(1, chartData.length - 1)))"
+          :cy="200 - (point.value / maxValue * 180 + 10)"
+          r="15"
+          fill="transparent"
+          class="cursor-pointer"
+          @mouseenter="showTooltip($event, point)"
+          @mouseleave="hideTooltip"
         />
       </svg>
 
@@ -47,24 +62,27 @@
           <line v-for="i in 5" :key="`h-${i}`" :y1="i * 40" :y2="i * 40" x1="0" x2="400" />
         </g>
 
-        <!-- Bars -->
+        <!-- Bars com hover -->
         <rect
           v-for="(point, index) in chartData"
           :key="index"
-          :x="index * (400 / chartData.length) + 10"
+          :x="index * (400 / Math.max(1, chartData.length)) + 10"
           :y="200 - (point.value / maxValue * 180 + 10)"
-          :width="(400 / chartData.length) - 20"
+          :width="(400 / Math.max(1, chartData.length)) - 20"
           :height="point.value / maxValue * 180 + 10"
           :fill="color"
           opacity="0.8"
           rx="2"
+          class="cursor-pointer transition-all duration-200 hover:opacity-100"
+          @mouseenter="showTooltip($event, point)"
+          @mouseleave="hideTooltip"
         />
 
         <!-- Labels -->
         <text
           v-for="(point, index) in chartData"
           :key="`label-${index}`"
-          :x="index * (400 / chartData.length) + (400 / chartData.length) / 2"
+          :x="index * (400 / Math.max(1, chartData.length)) + (400 / Math.max(1, chartData.length)) / 2"
           y="195"
           text-anchor="middle"
           class="text-xs fill-current text-muted-foreground"
@@ -73,21 +91,34 @@
         </text>
       </svg>
 
-      <!-- Gráfico de Pizza/Donut Simples -->
+      <!-- Gráfico de Pizza/Donut Completo -->
       <svg v-else-if="type === 'donut'" class="h-full w-full" viewBox="0 0 200 200">
         <g transform="translate(100, 100)">
-          <circle r="80" fill="none" :stroke="color" stroke-width="20" opacity="0.1" />
-          <circle
-            r="80"
-            fill="none"
-            :stroke="color"
-            stroke-width="20"
-            :stroke-dasharray="`${percentage * 5.03} 503`"
-            stroke-dashoffset="125.75"
-            transform="rotate(-90)"
-          />
-          <text text-anchor="middle" dy="0.3em" class="text-2xl font-bold fill-current">
-            {{ Math.round(percentage) }}%
+          <!-- Background circle -->
+          <circle r="80" fill="none" stroke="#e5e7eb" stroke-width="20" opacity="0.3" />
+
+          <!-- Data segments com hover -->
+          <g v-for="(segment, index) in donutSegments" :key="index">
+            <circle
+              r="80"
+              fill="none"
+              :stroke="getDonutColor(index)"
+              stroke-width="20"
+              :stroke-dasharray="`${segment.circumference} ${503 - segment.circumference}`"
+              :stroke-dashoffset="segment.offset"
+              transform="rotate(-90)"
+              class="cursor-pointer transition-all duration-200 hover:stroke-width-[25]"
+              @mouseenter="showTooltip($event, chartData[index])"
+              @mouseleave="hideTooltip"
+            />
+          </g>
+
+          <!-- Center text -->
+          <text text-anchor="middle" dy="-0.1em" class="text-lg font-bold fill-current">
+            {{ totalValue }}
+          </text>
+          <text text-anchor="middle" dy="1.2em" class="text-sm fill-current text-muted-foreground">
+            Total
           </text>
         </g>
       </svg>
@@ -98,6 +129,36 @@
       </div>
     </div>
 
+    <!-- Tooltip -->
+    <Teleport to="body">
+      <Transition
+        enter-active-class="transition-all duration-200 ease-out"
+        enter-from-class="opacity-0 scale-95 transform -translate-y-2"
+        enter-to-class="opacity-100 scale-100 transform translate-y-0"
+        leave-active-class="transition-all duration-150 ease-in"
+        leave-from-class="opacity-100 scale-100"
+        leave-to-class="opacity-0 scale-95"
+      >
+        <div
+          v-if="tooltip.visible"
+          :style="{ left: tooltip.x + 'px', top: tooltip.y + 'px' }"
+          class="fixed z-50 transform -translate-x-1/2 -translate-y-full rounded-lg bg-gray-900 px-3 py-2 text-sm text-white shadow-xl pointer-events-none"
+        >
+          <div class="font-medium">{{ tooltip.content.label }}</div>
+          <div class="text-gray-300">
+            {{ formatTooltipValue(tooltip.content.value) }}
+            <span v-if="type === 'donut' && totalValue > 0" class="ml-1">
+              ({{ Math.round((tooltip.content.value / totalValue) * 100) }}%)
+            </span>
+          </div>
+          <!-- Seta do tooltip -->
+          <div class="absolute top-full left-1/2 transform -translate-x-1/2">
+            <div class="w-2 h-2 bg-gray-900 rotate-45"></div>
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
+
     <!-- Legend -->
     <div v-if="showLegend && chartData.length > 1" class="mt-4 flex flex-wrap gap-4 text-sm">
       <div
@@ -105,22 +166,38 @@
         :key="`legend-${index}`"
         class="flex items-center gap-2"
       >
-        <div class="h-3 w-3 rounded-full" :style="`background-color: ${getLegendColor(index)}`"></div>
+        <div
+          class="h-3 w-3 rounded-full"
+          :style="`background-color: ${type === 'donut' ? getDonutColor(index) : getLegendColor(index)}`"
+        ></div>
         <span class="text-muted-foreground">{{ point.label }}</span>
+        <span v-if="type === 'donut' && totalValue > 0" class="font-medium text-foreground">
+          ({{ Math.round((point.value / totalValue) * 100) }}%)
+        </span>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref, reactive } from 'vue';
 
 interface ChartDataPoint {
   label: string;
   value: number;
 }
 
-interface Props {
+// Função para validar e sanitizar dados
+const sanitizeData = (data: ChartDataPoint[] | undefined): ChartDataPoint[] => {
+  if (!data || !Array.isArray(data)) {
+    return [];
+  }
+
+  return data.map(item => ({
+    label: String(item.label || 'Sem label'),
+    value: Number(item.value) || 0
+  }));
+};interface Props {
   title: string;
   type: 'line' | 'bar' | 'donut';
   data: ChartDataPoint[];
@@ -139,15 +216,101 @@ const props = withDefaults(defineProps<Props>(), {
   percentage: 75
 });
 
-const chartData = computed(() => props.data);
-const maxValue = computed(() => Math.max(...props.data.map(d => d.value)));
+// Estado do tooltip
+const tooltip = reactive({
+  visible: false,
+  x: 0,
+  y: 0,
+  content: {
+    label: '',
+    value: 0
+  }
+});
+
+// Funções para controlar tooltip
+const showTooltip = (event: MouseEvent, point: ChartDataPoint) => {
+  if (!point || !event.target) return;
+
+  const rect = (event.target as Element).getBoundingClientRect();
+  tooltip.visible = true;
+  tooltip.x = rect.left + (rect.width / 2);
+  tooltip.y = rect.top - 10;
+  tooltip.content = {
+    label: point.label || 'Sem label',
+    value: point.value || 0
+  };
+};
+
+const hideTooltip = () => {
+  tooltip.visible = false;
+};
+
+// Formatar valores para exibição
+const formatTooltipValue = (value: number) => {
+  const safeValue = value || 0;
+  if (props.type === 'donut') {
+    return safeValue.toLocaleString('pt-BR');
+  }
+  return `Valor: ${safeValue.toLocaleString('pt-BR')}`;
+};
+
+const chartData = computed(() => sanitizeData(props.data));
+const maxValue = computed(() => {
+  const data = chartData.value;
+  if (!data || data.length === 0) return 1;
+  const max = Math.max(...data.map(d => d.value));
+  return max === 0 ? 1 : max;
+});
+
+// Computed para gráfico donut
+const totalValue = computed(() => {
+  const data = chartData.value;
+  if (!data || data.length === 0) return 0;
+  return data.reduce((sum, item) => sum + item.value, 0);
+});
+
+const donutSegments = computed(() => {
+  if (props.type !== 'donut') return [];
+
+  const data = chartData.value;
+  if (!data || data.length === 0) return [];
+
+  const total = totalValue.value;
+  if (total === 0) return [];
+
+  const circumference = 2 * Math.PI * 80; // raio = 80
+  let currentOffset = 0;
+
+  return data.map((point) => {
+    const value = point.value;
+    const percentage = value / total;
+    const segmentCircumference = percentage * circumference;
+
+    const segment = {
+      circumference: segmentCircumference,
+      offset: -currentOffset,
+      percentage: percentage * 100
+    };
+
+    currentOffset += segmentCircumference;
+    return segment;
+  });
+});
+
+const getDonutColor = (index: number) => {
+  const colors = ['#3b82f6', '#ef4444', '#22c55e', '#f59e0b', '#8b5cf6', '#06b6d4'];
+  return colors[index % colors.length];
+};
 
 const linePath = computed(() => {
-  if (props.data.length === 0) return '';
+  const data = chartData.value;
+  if (!data || data.length === 0) return '';
 
-  const points = props.data.map((point, index) => {
-    const x = index * (400 / (props.data.length - 1));
-    const y = 200 - (point.value / maxValue.value * 180 + 10);
+  const max = maxValue.value;
+  const points = data.map((point, index) => {
+    const value = point.value;
+    const x = data.length <= 1 ? 200 : index * (400 / Math.max(1, data.length - 1));
+    const y = 200 - (value / max * 180 + 10);
     return `${x},${y}`;
   });
 
@@ -155,15 +318,19 @@ const linePath = computed(() => {
 });
 
 const areaPath = computed(() => {
-  if (props.data.length === 0) return '';
+  const data = chartData.value;
+  if (!data || data.length === 0) return '';
 
-  const points = props.data.map((point, index) => {
-    const x = index * (400 / (props.data.length - 1));
-    const y = 200 - (point.value / maxValue.value * 180 + 10);
+  const max = maxValue.value;
+  const points = data.map((point, index) => {
+    const value = point.value;
+    const x = data.length <= 1 ? 200 : index * (400 / Math.max(1, data.length - 1));
+    const y = 200 - (value / max * 180 + 10);
     return `${x},${y}`;
   });
 
-  return `M 0,200 L ${points.join(' L ')} L ${(props.data.length - 1) * (400 / (props.data.length - 1))},200 Z`;
+  const lastX = data.length <= 1 ? 200 : Math.max(1, data.length - 1) * (400 / Math.max(1, data.length - 1));
+  return `M 0,200 L ${points.join(' L ')} L ${lastX},200 Z`;
 });
 
 const getLegendColor = (index: number) => {
