@@ -51,51 +51,40 @@ class DashboardController extends Controller
             $valorJun = $valorJun + $serv->valor_total;
         };
         // dd($valorJun);
-        $junOrdemServicoCount = DB::table('ordemdeservicos')->where('deleted', 0)->where('status', 3)->whereMonth('data_de_saida', 6)->whereYear('data_de_saida', 2025)->count();
-
-
         $julOrdemServico = DB::table('ordemdeservicos')->where('deleted', 0)->where('status', 3)->whereMonth('data_de_saida', 7)->whereYear('data_de_saida', 2025)->get();
         foreach ($julOrdemServico as $serv) {
             $valorJul = $valorJul + $serv->valor_total;
         };
-        $julOrdemServicoCount = DB::table('ordemdeservicos')->where('deleted', 0)->where('status', 3)->whereMonth('data_de_saida', 7)->whereYear('data_de_saida', 2025)->count();
-
-
         $agoOrdemServico = DB::table('ordemdeservicos')->where('deleted', 0)->where('status', 3)->whereMonth('data_de_saida', 8)->whereYear('data_de_saida', 2025)->get();
         foreach ($agoOrdemServico as $serv) {
             $valorAgo = $valorAgo + $serv->valor_total;
         };
-        $agoOrdemServicoCount = DB::table('ordemdeservicos')->where('deleted', 0)->where('status', 3)->whereMonth('data_de_saida', 8)->whereYear('data_de_saida', 2025)->count();
-
-
-
         $setOrdemServico = DB::table('ordemdeservicos')->where('deleted', 0)->where('status', 3)->whereMonth('data_de_saida', 9)->whereYear('data_de_saida', 2025)->get();
         foreach ($setOrdemServico as $serv) {
             $valorSet = $valorSet + $serv->valor_total;
         };
         // dd($valorSet);
-        $setOrdemServicoCount = DB::table('ordemdeservicos')->where('deleted', 0)->where('status', 3)->whereMonth('data_de_saida', 9)->whereYear('data_de_saida', 2025)->count();
-
-
         $outOrdemServico = DB::table('ordemdeservicos')->where('deleted', 0)->where('status', 3)->whereMonth('data_de_saida', 10)->whereYear('data_de_saida', 2025)->get();
         foreach ($outOrdemServico as $serv) {
             $valorOut = $valorOut + $serv->valor_total;
         };
-        $outOrdemServicoCount = DB::table('ordemdeservicos')->where('deleted', 0)->where('status', 3)->whereMonth('data_de_saida', 10)->whereYear('data_de_saida', 2025)->count();
-
-
         $novOrdemServico = DB::table('ordemdeservicos')->where('deleted', 0)->where('status', 3)->whereMonth('data_de_saida', 11)->whereYear('data_de_saida', 2025)->get();
         foreach ($novOrdemServico as $serv) {
             $valorNov = $valorNov + $serv->valor_total;
         };
-        $novOrdemServicoCount = DB::table('ordemdeservicos')->where('deleted', 0)->where('status', 3)->whereMonth('data_de_saida', 11)->whereYear('data_de_saida', 2025)->count();
-
-
         $dezOrdemServico = DB::table('ordemdeservicos')->where('deleted', 0)->where('status', 3)->whereMonth('data_de_saida', 12)->whereYear('data_de_saida', 2025)->get();
         foreach ($dezOrdemServico as $serv) {
             $valorDez = $valorDez + $serv->valor_total;
         };
-        $dezOrdemServicoCount = DB::table('ordemdeservicos')->where('deleted', 0)->where('status', 3)->whereMonth('data_de_saida', 12)->whereYear('data_de_saida', 2025)->count();
+
+        // Utilizados no gráfico de barras
+        $junOrdemServicoCount = DB::table('ordemdeservicos')->where('deleted', 0)->whereMonth('data_de_saida', 6)->whereYear('data_de_saida', 2025)->count();
+        $julOrdemServicoCount = DB::table('ordemdeservicos')->where('deleted', 0)->whereMonth('data_de_saida', 7)->whereYear('data_de_saida', 2025)->count();
+        $agoOrdemServicoCount = DB::table('ordemdeservicos')->where('deleted', 0)->whereMonth('data_de_saida', 8)->whereYear('data_de_saida', 2025)->count();
+        $setOrdemServicoCount = DB::table('ordemdeservicos')->where('deleted', 0)->whereMonth('data_de_saida', 9)->whereYear('data_de_saida', 2025)->count();
+        $outOrdemServicoCount = DB::table('ordemdeservicos')->where('deleted', 0)->whereMonth('data_de_saida', 10)->whereYear('data_de_saida', 2025)->count();
+        $novOrdemServicoCount = DB::table('ordemdeservicos')->where('deleted', 0)->whereMonth('data_de_saida', 11)->whereYear('data_de_saida', 2025)->count();
+        $dezOrdemServicoCount = DB::table('ordemdeservicos')->where('deleted', 0)->whereMonth('data_de_saida', 12)->whereYear('data_de_saida', 2025)->count();
 
 
         // dd($junOrdemServico);
@@ -190,6 +179,37 @@ class DashboardController extends Controller
             [
                 'label' => 'Dezembro',
                 'value' => $valorDez
+            ],
+        ];
+
+        $usersChartData = [
+            [
+                'label' => 'Jun',
+                'value' => $junOrdemServicoCount
+            ],
+            [
+                'label' => 'Jul',
+                'value' => $julOrdemServicoCount
+            ],
+            [
+                'label' => 'Ago',
+                'value' => $agoOrdemServicoCount
+            ],
+            [
+                'label' => 'Set',
+                'value' => $setOrdemServicoCount
+            ],
+            [
+                'label' => 'Out',
+                'value' => $outOrdemServicoCount
+            ],
+            [
+                'label' => 'Nov',
+                'value' => $novOrdemServicoCount
+            ],
+            [
+                'label' => 'Dez',
+                'value' => $dezOrdemServicoCount
             ],
         ];
 
@@ -332,6 +352,7 @@ class DashboardController extends Controller
             'recentOrdersData' => $recentOrdersData,
             'categoriesData' => $categoriesData,
             'revenueChartData' => $revenueChartData,
+            'usersChartData' => $usersChartData,
         ]);
     }
 }

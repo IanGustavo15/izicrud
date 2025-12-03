@@ -117,9 +117,9 @@ const props = defineProps<{
                             show-legend
                     />
                     <SimpleChart
-                            title="Novos Usuários"
+                            title="Ordens de Serviço por mês"
                             type="bar"
-                            :data="usersChartData"
+                            :data="props.usersChartData"
                             color="#10b981"
                     />
                     <SimpleChart
@@ -127,6 +127,7 @@ const props = defineProps<{
                             type="donut"
                             :data="props.categoriesData"
                             color="#8b56f6"
+                            show-legend
                     />
                 </div>
                 <div class="grid gap-4 lg:grid-cols-2">
@@ -135,12 +136,14 @@ const props = defineProps<{
                         :columns="performersColumns"
                         :data="props.topPerformersData"
                         show-pagination
+                        actions
                     />
                     <DashTable
                         title="Ordens de Serviço Recentes"
                         :columns="ordersColumns"
                         :data="props.recentOrdersData"
                         show-pagination
+                        actions
                     />
 
                 </div>
@@ -149,6 +152,7 @@ const props = defineProps<{
                         :columns="servicesColumns"
                         :data="props.servicesData"
                         show-pagination
+                        actions
                     />
         </div>
     </AppLayout>

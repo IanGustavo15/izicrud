@@ -317,6 +317,8 @@ const getColumnWidth = (key: string) => {
     preco: 'w-24',
     agendamentos: 'w-20',
     trend: 'w-16'
+    // , rating: 'w-20',
+    // trabalhos: 'w-8',
   };
 
   return widthMap[key] || 'w-auto';
