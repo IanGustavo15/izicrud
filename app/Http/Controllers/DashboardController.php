@@ -11,107 +11,107 @@ use App\Models\Cliente;
 use App\Models\Peca;
 use App\Models\PecaServico;
 use App\Models\ServicoOrdemDeServico;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
 {
     public function index()
     {
-        $totalClientes = Cliente::where('deleted', 0)->orderBy('id', 'desc')->count();
-        $totalVeiculos = Veiculo::where('deleted', 0)->orderBy('id', 'desc')->count();
-        $totalServicos = Servico::where('deleted', 0)->orderBy('id', 'desc')->count();
-        $totalPecas = Peca::where('deleted', 0)->orderBy('id', 'desc')->count();
+        // Contadores Básicos
+        $totalClientes = Cliente::where('deleted', 0)->count();
+        $totalVeiculos = Veiculo::where('deleted', 0)->count();
+        $totalServicos = Servico::where('deleted', 0)->count();
+        $totalPecas = Peca::where('deleted', 0)->count();
+
+        // Consultas com relacionamento
         $servicos = Servico::where('deleted', 0)->orderBy('id', 'asc')->get();
-        $pecaServico = PecaServico::where('deleted', 0)->orderBy('id', 'asc')->get();
-        $ordemServico = OrdemDeServico::where('deleted', 0)->with('cliente')->with('veiculo')->orderBy('id', 'asc')->get();
-        $servicoOrdemServico = ServicoOrdemDeServico::where('deleted', 0)->with('servico')->with('ordemdeservico')->orderBy('id', 'asc')->get();
+        $pecaServico = PecaServico::where('deleted', 0)
+            ->with('peca')
+            ->get();
+        $ordemServico = OrdemDeServico::where('deleted', 0)
+            ->with(['cliente', 'veiculo'])
+            ->get();
+        $servicoOrdemServico = ServicoOrdemDeServico::where('deleted', 0)
+            ->with(['servico', 'ordemdeservico'])
+            ->get();
 
-        // Utilizados no gráfico de Pizza/Donut
-        $totalEmAberto = OrdemDeServico::where('deleted', 0)->where('status', 1)->count();
-        $totalEmAndamento = OrdemDeServico::where('deleted', 0)->where('status', 2)->count();
-        $totalFinalizados = OrdemDeServico::where('deleted', 0)->where('status', 3)->count(); // Utilizado nas duas formas
-        $totalCancelados = OrdemDeServico::where('deleted', 0)->where('status', 4)->count();
+        // Contagem por Status da OS
+        $statusCount = OrdemDeServico::where('deleted', 0)
+            ->selectRaw('status, COUNT(*) as total')
+            ->groupBy('status')
+            ->pluck('total', 'status');
 
-        $totalOrdemServico = OrdemDeServico::where('deleted', 0)->where('status', 1)->count() + OrdemDeServico::where('deleted', 0)->where('status', 2)->count() + OrdemDeServico::where('deleted', 0)->where('status', 4)->count(); // Todas que não estão finalizadas
-        // dd($totalFinalizados);
-        // dd($totalOrdemServico);
-
-        // Utilizados no gráfico de Linhas
-        $valorJun = 0;
-        $valorJul = 0;
-        $valorAgo = 0;
-        $valorSet = 0;
-        $valorOut = 0;
-        $valorNov = 0;
-        $valorDez = 0;
+        $totalEmAberto = $statusCount[1] ?? 0;
+        $totalEmAndamento = $statusCount[2] ?? 0;
+        $totalFinalizados = $statusCount[3] ?? 0;
+        $totalCancelados = $statusCount[4] ?? 0;
 
 
-        $junOrdemServico = DB::table('ordemdeservicos')->where('deleted', 0)->where('status', 3)->whereMonth('data_de_saida', 6)->whereYear('data_de_saida', 2025)->get();
-        foreach ($junOrdemServico as $serv) {
-            $valorJun = $valorJun + $serv->valor_total;
-        };
-        // dd($valorJun);
-        $julOrdemServico = DB::table('ordemdeservicos')->where('deleted', 0)->where('status', 3)->whereMonth('data_de_saida', 7)->whereYear('data_de_saida', 2025)->get();
-        foreach ($julOrdemServico as $serv) {
-            $valorJul = $valorJul + $serv->valor_total;
-        };
-        $agoOrdemServico = DB::table('ordemdeservicos')->where('deleted', 0)->where('status', 3)->whereMonth('data_de_saida', 8)->whereYear('data_de_saida', 2025)->get();
-        foreach ($agoOrdemServico as $serv) {
-            $valorAgo = $valorAgo + $serv->valor_total;
-        };
-        $setOrdemServico = DB::table('ordemdeservicos')->where('deleted', 0)->where('status', 3)->whereMonth('data_de_saida', 9)->whereYear('data_de_saida', 2025)->get();
-        foreach ($setOrdemServico as $serv) {
-            $valorSet = $valorSet + $serv->valor_total;
-        };
-        // dd($valorSet);
-        $outOrdemServico = DB::table('ordemdeservicos')->where('deleted', 0)->where('status', 3)->whereMonth('data_de_saida', 10)->whereYear('data_de_saida', 2025)->get();
-        foreach ($outOrdemServico as $serv) {
-            $valorOut = $valorOut + $serv->valor_total;
-        };
-        $novOrdemServico = DB::table('ordemdeservicos')->where('deleted', 0)->where('status', 3)->whereMonth('data_de_saida', 11)->whereYear('data_de_saida', 2025)->get();
-        foreach ($novOrdemServico as $serv) {
-            $valorNov = $valorNov + $serv->valor_total;
-        };
-        $dezOrdemServico = DB::table('ordemdeservicos')->where('deleted', 0)->where('status', 3)->whereMonth('data_de_saida', 12)->whereYear('data_de_saida', 2025)->get();
-        foreach ($dezOrdemServico as $serv) {
-            $valorDez = $valorDez + $serv->valor_total;
-        };
+        // Dados Mensais
+        $anoAtual = Carbon::now()->year;
+        $mesesDesejados = [6, 7, 8, 9, 10, 11, 12];
 
-        // Utilizados no gráfico de barras
-        $junOrdemServicoCount = DB::table('ordemdeservicos')->where('deleted', 0)->whereMonth('data_de_saida', 6)->whereYear('data_de_saida', 2025)->count();
-        $julOrdemServicoCount = DB::table('ordemdeservicos')->where('deleted', 0)->whereMonth('data_de_saida', 7)->whereYear('data_de_saida', 2025)->count();
-        $agoOrdemServicoCount = DB::table('ordemdeservicos')->where('deleted', 0)->whereMonth('data_de_saida', 8)->whereYear('data_de_saida', 2025)->count();
-        $setOrdemServicoCount = DB::table('ordemdeservicos')->where('deleted', 0)->whereMonth('data_de_saida', 9)->whereYear('data_de_saida', 2025)->count();
-        $outOrdemServicoCount = DB::table('ordemdeservicos')->where('deleted', 0)->whereMonth('data_de_saida', 10)->whereYear('data_de_saida', 2025)->count();
-        $novOrdemServicoCount = DB::table('ordemdeservicos')->where('deleted', 0)->whereMonth('data_de_saida', 11)->whereYear('data_de_saida', 2025)->count();
-        $dezOrdemServicoCount = DB::table('ordemdeservicos')->where('deleted', 0)->whereMonth('data_de_saida', 12)->whereYear('data_de_saida', 2025)->count();
+        $valoresMensais = OrdemDeServico::where('deleted', 0)
+            ->where('status', 3)
+            ->whereYear('data_de_saida', $anoAtual)
+            ->whereIn(DB::raw('MONTH(data_de_saida)'), $mesesDesejados)
+            ->selectRaw('MONTH(data_de_saida) as mes, SUM(valor_total) as total')
+            ->groupBy('mes')
+            ->pluck('total', 'mes');
+
+        $contagensMensais = OrdemDeServico::where('deleted', 0)
+            ->whereYear('data_de_saida', $anoAtual)
+            ->whereIn(DB::raw('MONTH(data_de_saida)'), $mesesDesejados)
+            ->selectRaw('MONTH(data_de_saida) as mes, COUNT(*) as total')
+            ->groupBy('mes')
+            ->pluck('total', 'mes');
 
 
-        // dd($junOrdemServico);
-        // dd($junOrdemServicoCount);
+        // Montagem dos dados graficados
+        $nomeMeses = [
+            'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
+        ];
 
-        // dd($julOrdemServico);
-        // dd($julOrdemServicoCount);
+        $revenueChartData = [];
+        $usersChartData = [];
 
-        // dd($agoOrdemServico);
-        // dd($agoOrdemServicoCount);
+        foreach ($mesesDesejados as $index => $numeroMes) {
+            $revenueChartData[] = [
+                'label' => $nomeMeses[$index],
+                'value' => $valoresMensais[$numeroMes]?? 0
+            ];
+            $usersChartData[] = [
+                'label' => substr($nomeMeses[$index], 0, 3),
+                'value' => $contagensMensais[$numeroMes]?? 0
+            ];
+        }
 
-        // dd($setOrdemServico);
-        // dd($setOrdemServicoCount);
+        // Dados Estáticos
+        $stats = $this->getStatsData($totalClientes, $totalVeiculos, $totalServicos, $totalPecas);
+        $categoriesData = $this->getCategoriesData($totalEmAberto, $totalEmAndamento, $totalFinalizados, $totalCancelados);
+        $topPerformersData = $this->getTopPerformersData();
 
-        // dd($outOrdemServico);
-        // dd($outOrdemServicoCount);
 
-        // dd($novOrdemServico);
-        // dd($novOrdemServicoCount);
+        // Dados Dinâmicos
+        $servicesData = $this->getServicesData($servicos, $pecaServico);
+        $recentOrdersData = $this->getRecentOrdersData($ordemServico, $servicoOrdemServico);
 
-        // dd($dezOrdemServico);
-        // dd($dezOrdemServicoCount);
 
-        // dd($pecaServico);
-        // dd($servicos);
+        return Inertia::render('Dashboard', [
+            'stats' => $stats,
+            'topPerformersData' => $topPerformersData,
+            'servicesData' => $servicesData,
+            'recentOrdersData' => $recentOrdersData,
+            'categoriesData' => $categoriesData,
+            'revenueChartData' => $revenueChartData,
+            'usersChartData' => $usersChartData,
+        ]);
+    }
 
-        $stats = [
+    public function getStatsData($totalClientes, $totalVeiculos, $totalServicos, $totalPecas)
+    {
+         return [
             [
                 'title' => 'Total de Clientes',
                 'value' => $totalClientes,
@@ -141,90 +141,11 @@ class DashboardController extends Controller
                 'variant' => 'default',
             ],
         ];
+    }
 
-//         const revenueChartData = ref([
-//     { label: 'Jun', value: 4200 },
-//     { label: 'Jul', value: 3800 },
-//     { label: 'Ago', value: 5200 },
-//     { label: 'Set', value: 4800 },
-//     { label: 'Out', value: 6100 },
-//     { label: 'Nov', value: 5500 },
-//     { label: 'Dez', value: 7200 }
-// ]);
-        $revenueChartData = [
-            [
-                'label' => 'Junho',
-                'value' => $valorJun
-            ],
-            [
-                'label' => 'Julho',
-                'value' => $valorJul
-            ],
-            [
-                'label' => 'Agosto',
-                'value' => $valorAgo
-            ],
-            [
-                'label' => 'Setembro',
-                'value' => $valorSet
-            ],
-            [
-                'label' => 'Outubro',
-                'value' => $valorOut
-            ],
-            [
-                'label' => 'Novembro',
-                'value' => $valorNov
-            ],
-            [
-                'label' => 'Dezembro',
-                'value' => $valorDez
-            ],
-        ];
-
-        $usersChartData = [
-            [
-                'label' => 'Jun',
-                'value' => $junOrdemServicoCount
-            ],
-            [
-                'label' => 'Jul',
-                'value' => $julOrdemServicoCount
-            ],
-            [
-                'label' => 'Ago',
-                'value' => $agoOrdemServicoCount
-            ],
-            [
-                'label' => 'Set',
-                'value' => $setOrdemServicoCount
-            ],
-            [
-                'label' => 'Out',
-                'value' => $outOrdemServicoCount
-            ],
-            [
-                'label' => 'Nov',
-                'value' => $novOrdemServicoCount
-            ],
-            [
-                'label' => 'Dez',
-                'value' => $dezOrdemServicoCount
-            ],
-        ];
-
-        // $categoriesData = [ // Forma de Finalizados + Outros
-        //     [
-        //         'label' => 'Finalizados',
-        //         'value' => $totalFinalizados
-        //     ],
-        //     [
-        //         'label' => 'Outros',
-        //         'value' => $totalOrdemServico
-        //     ],
-        // ];
-
-        $categoriesData = [ // Forma com todos os Status
+    public function getCategoriesData($totalEmAberto, $totalEmAndamento, $totalFinalizados, $totalCancelados)
+    {
+            return [
             [
                 'label' => 'Em Aberto',
                 'value' => $totalEmAberto
@@ -243,8 +164,11 @@ class DashboardController extends Controller
             ],
 
         ];
+    }
 
-        $topPerformersData = [
+    public function getTopPerformersData()
+    {
+       return [
             [
                 'avatar' => true,
                 'nome' => 'Mecânico Ciro Gomes',
@@ -262,97 +186,50 @@ class DashboardController extends Controller
                 'trend' => 8.3
             ],
         ];
+    }
 
-        $servicesData = [
-            [
-                'nome' => $servicos[0]->nome,
-                'categoria' => $pecaServico[0]->peca->descricao,
-                'preco' => $servicos[0]->preco_mao_de_obra,
-                'agendamentos' => $pecaServico[0]->peca->quantidade,
-                'status' => 'ativo'
-            ],
-            [
-                'nome' => $servicos[1]->nome,
-                'categoria' => $pecaServico[1]->peca->descricao,
-                'preco' => $servicos[1]->preco_mao_de_obra,
-                'agendamentos' => $pecaServico[1]->peca->quantidade,
-                'status' => 'ativo'
-            ],
-            [
-                'nome' => $servicos[2]->nome,
-                'categoria' => $pecaServico[2]->peca->descricao,
-                'preco' => $servicos[2]->preco_mao_de_obra,
-                'agendamentos' => $pecaServico[2]->peca->quantidade,
-                'status' => 'ativo'
-            ],
-            [
-                'nome' => $servicos[3]->nome,
-                'categoria' => $pecaServico[3]->peca->descricao  . ' / ' . $pecaServico[4]->peca->descricao,
-                'preco' => $servicos[3]->preco_mao_de_obra,
-                'agendamentos' => $pecaServico[3]->peca->quantidade . ' / ' . $pecaServico[4]->peca->quantidade,
-                'status' => 'ativo'
-            ],
-        ];
-        // dd($ordemServico);
-
-        foreach ($ordemServico as $os) {
-            if ($os->status == 1) {
-            $os->status = 'em_aberto';
-        } elseif ($os->status == 2) {
-            $os->status = 'em_andamento';
-        } elseif ($os->status == 3) {
-            $os->status = 'finalizado';
-        } else {
-            $os->status = 'cancelado';
-        }
-        // dd($os);
-        }
-
-        // dd($servicoOrdemServico);
-
-        $recentOrdersData = [
-            [
-                'numero' => 'OS-' . $ordemServico[0]->id,
-                'pet' => $ordemServico[0]->cliente->nome . '/' . $ordemServico[0]->veiculo->modelo,
-                'servico' => $servicoOrdemServico[0]->servico->nome . ' - ' . $servicoOrdemServico[0]->servico->descricao,
-                'status'  => $ordemServico[0]->status,
-                'total' => $ordemServico[0]->valor_total,
-                'data'  =>'24/11/2024'
-            ],
-            [
-                'numero' => 'OS-' . $ordemServico[1]->id,
-                'pet' => $ordemServico[1]->cliente->nome . '/' . $ordemServico[1]->veiculo->modelo,
-                'servico' => $servicoOrdemServico[1]->servico->nome . ' - ' . $servicoOrdemServico[1]->servico->descricao,
-                'status'  => $ordemServico[1]->status,
-                'total' => $ordemServico[1]->valor_total,
-                'data'  =>'24/11/2024'
-            ],
-            [
-                'numero' => 'OS-' . $ordemServico[2]->id,
-                'pet' => $ordemServico[2]->cliente->nome . '/' . $ordemServico[2]->veiculo->modelo,
-                'servico' => $servicoOrdemServico[2]->servico->nome . ' - ' . $servicoOrdemServico[2]->servico->descricao,
-                'status'  => $ordemServico[2]->status,
-                'total' => $ordemServico[2]->valor_total,
-                'data'  =>'24/11/2024'
-            ],
-            [
-                'numero' => 'OS-' . $ordemServico[3]->id,
-                'pet' => $ordemServico[3]->cliente->nome . '/' . $ordemServico[3]->veiculo->modelo,
-                'servico' => $servicoOrdemServico[3]->servico->nome . ' - ' . $servicoOrdemServico[3]->servico->descricao,
-                'status'  => $ordemServico[3]->status,
-                'total' => $ordemServico[3]->valor_total,
-                'data'  =>'24/11/2024'
-            ],
+    public function getRecentOrdersData($ordemServico, $servicoOrdemServico)
+    {
+        $recentOrdersData = [];
+        $statusMap = [
+            1 => 'em_aberto',
+            2 => 'em_andamento',
+            3 => 'finalizado',
+            4 => 'cancelado'
         ];
 
-        return Inertia::render('Dashboard', [
-            'stats' => $stats,
-            'topPerformersData' => $topPerformersData,
-            'servicesData' => $servicesData,
-            'recentOrdersData' => $recentOrdersData,
-            'categoriesData' => $categoriesData,
-            'revenueChartData' => $revenueChartData,
-            'usersChartData' => $usersChartData,
-        ]);
+        for ($i=0; $i < min(4, count($ordemServico), count($servicoOrdemServico)); $i++) {
+            $ordem = $ordemServico[$i];
+            $servicoOrdem = $servicoOrdemServico[$i];
+
+            $recentOrdersData[] = [
+                'numero' => 'OS-' . $ordem->id,
+                'pet' => $ordem->cliente->nome . '/' . $ordem->veiculo->modelo,
+                'servico' => $servicoOrdem->servico->nome . ' - ' . $servicoOrdem->servico->descricao,
+                'status'  => $statusMap[$ordem->status],
+                'total' => $ordem->valor_total,
+                'data'  =>'24/11/2024'
+            ];
+        }
+
+        return $recentOrdersData;
+    }
+
+    public function getServicesData($servicos, $pecaServico)
+    {
+        $servicesData = [];
+        for ($i=0; $i < min(4, count($servicos), count($pecaServico)); $i++) {
+            $servico = $servicos[$i];
+            $peca = $pecaServico[$i];
+
+            $servicesData[] = [
+                'nome' => $servico->nome,
+                'categoria' => $peca->peca->descricao,
+                'preco' => $servico->preco_mao_de_obra,
+                'agendamentos' => $peca->peca->quantidade,
+                'status' => 'ativo'
+            ];
+        }
+        return $servicesData;
     }
 }
