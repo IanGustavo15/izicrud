@@ -111,7 +111,7 @@ interface PecaServico{
 };
 
 const props = defineProps<{
-    item?: { id: number; nome: string; descricao: string; preco_mao_de_obra: number; tempo_estimado: number };
+    item?: { id: number; nome: string; descricao: string; preco_mao_de_obra: number; tempo_estimado: number; quantidade_peca: number};
     sidebarNavItems: { title: string; href: string }[];
     pecas: Peca [];
     pecasEdit: PecaServico [];
@@ -145,6 +145,7 @@ const form = useForm({
     descricao: props.item?.descricao.toString() || '',
     preco_mao_de_obra: props.item?.preco_mao_de_obra.toString() || 0,
     tempo_estimado: props.item?.tempo_estimado.toString() || 0,
+    quantidade_peca: props.item?.quantidade_peca.toString() || 0,
     pecas: [] as Array <{
             value: number,
             label: string,
@@ -295,9 +296,8 @@ onMounted(
                                                         </SelectItem>
                                                     </SelectContent>
                                                 </Select>
-                                                <!-- <Label class="text-xs py-1">Quantia</Label> -->
-                                                <!-- <input v-if="!isEditing" type="number" placeholder="1" min="1" :value=""> -->
-
+                                                <Label v-if="!isEditing" class="text-xs py-1" for="quantidade_peca">Quantia por Serviço</Label>
+                                                <Input v-if="!isEditing" id="quantidade_peca" type="number" min="1" v-model="form.quantidade_peca" />
 
 
                                                 <Select v-else v-model="item.value" @update:model-value="(value) => {
@@ -320,6 +320,8 @@ onMounted(
                                                         </SelectItem>
                                                     </SelectContent>
                                                 </Select>
+                                                <Label v-if="isEditing" class="text-xs py-1" for="quantidade_peca">Quantia por Serviço</Label>
+                                                <Input v-if="isEditing" id="quantidade_peca" type="number" min="1" v-model="form.quantidade_peca" />
                                             </div>
 
                                         </div>
