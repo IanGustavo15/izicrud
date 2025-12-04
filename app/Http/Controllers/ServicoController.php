@@ -64,6 +64,7 @@ class ServicoController extends Controller
             'descricao' => 'required|string',
             'preco_mao_de_obra' => 'required|numeric',
             'tempo_estimado' => 'required|integer',
+            'quantidade_peca' => 'integer',
         ]);
 
         $serv = Servico::create($request->all());
@@ -75,7 +76,7 @@ class ServicoController extends Controller
 
                 'id_servico' => $serv->id,
                 'id_peca' => $peca['value'],
-                'quantidade_peca' => 0,
+                'quantidade_peca' => $serv->quantidade_peca,
                 ]
             );
         }
@@ -136,6 +137,7 @@ class ServicoController extends Controller
             'descricao' => 'required|string',
             'preco_mao_de_obra' => 'required|numeric',
             'tempo_estimado' => 'required|integer',
+            'quantidade_peca' => 'integer',
         ]);
 
         $servico->update($request->except('pecas'));
@@ -151,13 +153,14 @@ class ServicoController extends Controller
                         'id_peca' => $peca['value'],
                     ],
                     [
-                        'quantidade_peca' => 1,
+                        'quantidade_peca' => $servico->quantidade_peca,
                     ]
                 );
                 }
             }
         }
         // dd($request->pecas);
+        // dd($servico);
 
         return redirect()->route('servico.index')->with('success', 'Serviço atualizado com sucesso.');
     }
