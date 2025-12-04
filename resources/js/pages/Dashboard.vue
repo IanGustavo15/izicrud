@@ -2,13 +2,15 @@
 import AppLayout from '@/layouts/AppLayout.vue';
 import { dashboard } from '@/routes';
 import { type BreadcrumbItem } from '@/types';
-import { Head } from '@inertiajs/vue3';
+import { Head, router } from '@inertiajs/vue3';
 import PlaceholderPattern from '../components/PlaceholderPattern.vue';
 import { ref, onMounted } from 'vue'
 import { Monitor } from 'lucide-vue-next';
 import { VisAxis, VisGroupedBar, VisXYContainer } from '@unovis/vue';
 import { ChartContainer, ChartCrosshair, ChartLegendContent, ChartTooltip, ChartTooltipContent, componentToString } from '@/components/ui/chart';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
 
 // Dash Components
 import StatsCard from '@/components/dashboard/StatsCard.vue';
@@ -60,6 +62,35 @@ const servicesColumns = [
     { key: 'agendamentos', label: 'Quantidade' },
     { key: 'status', label: 'Status' }
 ];
+
+const actionEditOS = (os: Record<string , any>) => {
+    console.log(os);
+    router.visit(`/ordemdeservico/${os.id}/edit`);
+};
+
+// Estados para os modais e funções para os modais
+const showDeleteDialog = ref(false);
+const itemToDelete = ref<number | null>(null);
+
+function actionDeleteOS(os: any):void{
+    itemToDelete.value = os.id;
+    showDeleteDialog.value = true;
+}
+
+function confirmarExclusaoOS ():void{
+
+    if (itemToDelete.value !== null) {
+        router.delete(`/ordemdeservico/${itemToDelete.value}`, {
+            onSuccess: () => {
+                showDeleteDialog.value = false;
+                itemToDelete.value = null;
+            },
+            onError: () =>{
+                showDeleteDialog.value = false;
+            }
+        })
+    }
+}
 
 
 
@@ -139,22 +170,41 @@ const props = defineProps<{
                         actions
                     />
                     <DashTable
+                        class="[&_td]:whitespace-nowrap [&_th]:whitespace-nowrap [&_td:first-child]:max-w-[100px] [&_td:first-child]:truncate"
                         title="Ordens de Serviço Recentes"
                         :columns="ordersColumns"
                         :data="props.recentOrdersData"
-                        show-pagination
-                        actions
+                        :show-pagination="true"
+                        :items-per-page="4"
+                        :actions="true"
+                        @edit="actionEditOS"
+                        @delete="actionDeleteOS"
                     />
-
                 </div>
                 <DashTable
                         title="Serviços Disponíveis"
                         :columns="servicesColumns"
                         :data="props.servicesData"
-                        show-pagination
-                        actions
+                        :show-pagination="true"
+                        :actions="true"
                     />
         </div>
+
+        <Dialog v-model:open="showDeleteDialog">
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Confirmar Exclusão</DialogTitle>
+                    <DialogDescription>
+                        Tem certeza de que deseja excluir esta ordem de serviço? Esta ação não pode ser desfeita.
+                    </DialogDescription>
+                </DialogHeader>
+                <DialogFooter>
+                    <Button variant="outline" @click="showDeleteDialog = false">Cancelar</Button>
+                    <Button variant="destructive" @click="confirmarExclusaoOS">Excluir</Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+
     </AppLayout>
 </template>
 

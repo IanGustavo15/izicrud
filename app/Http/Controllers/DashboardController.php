@@ -203,6 +203,7 @@ class DashboardController extends Controller
             $servicoOrdem = $servicoOrdemServico[$i];
 
             $recentOrdersData[] = [
+                'id' => $ordem->id,
                 'numero' => 'OS-' . $ordem->id,
                 'pet' => $ordem->cliente->nome . '/' . $ordem->veiculo->modelo,
                 'servico' => $servicoOrdem->servico->nome . ' - ' . $servicoOrdem->servico->descricao,
@@ -223,6 +224,7 @@ class DashboardController extends Controller
             $peca = $pecaServico[$i];
 
             $servicesData[] = [
+                'id' => $servico->id,
                 'nome' => $servico->nome,
                 'categoria' => $peca->peca->descricao,
                 'preco' => $servico->preco_mao_de_obra,
