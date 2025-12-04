@@ -14,6 +14,7 @@ return new class extends Migration
             $table->string('descricao');
             $table->float('preco_mao_de_obra', 2);
             $table->integer('tempo_estimado', false, true);
+            $table->integer('quantidade_peca', false, true);
             $table->boolean('deleted')->default(false);
             $table->timestamps();
         });
@@ -23,6 +24,7 @@ return new class extends Migration
             'descricao' => 'Óleo + filtro',
             'preco_mao_de_obra' => '10',
             'tempo_estimado' => '30',
+            'quantidade_peca' => '1',
             'deleted' => 0,
             'created_at' => now(),
             'updated_at' => now(),
@@ -33,6 +35,7 @@ return new class extends Migration
             'descricao' => 'Pneu + algo',
             'preco_mao_de_obra' => '20',
             'tempo_estimado' => '60',
+            'quantidade_peca' => '1',
             'deleted' => 0,
             'created_at' => now(),
             'updated_at' => now(),

@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Servico extends Model
 {
-    protected $fillable = ['nome', 'descricao', 'preco_mao_de_obra', 'tempo_estimado', 'deleted'];
+    protected $fillable = ['nome', 'descricao', 'preco_mao_de_obra', 'tempo_estimado', 'quantidade_peca', 'deleted'];
 
     public function pecasPadrao()
     {
