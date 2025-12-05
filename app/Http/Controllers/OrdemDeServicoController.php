@@ -241,13 +241,11 @@ class OrdemDeServicoController extends Controller
         $pecasDoServico = PecaServico::where('deleted', 0)->whereIn('id_servico', $servicos)->get()->pluck('id_peca');
         $quantidadeSubtraida = PecaServico::where('deleted', 0)->whereIn('id_servico', $servicos)->get();
 
-        // Fazendo a condicional
-dd($quantidadeSubtraida);
-        $pecas = Peca::whereIn('id', $pecasDoServico)->decrement('quantidade', $quantidadeSubtraida);
+        // dd($quantidadeSubtraida);
+        $pecas = Peca::whereIn('id', $pecasDoServico)->decrement('quantidade', $quantidadeSubtraida[0]->quantidade_peca);
         // dd($pecasDoServico);
         // dd($servicos);
         // dd($fimOrdem);
-
         // dd($pecas);
         // dd($pecaEscolhida);
         return redirect()->route('ordemdeservico.index')->with('success', 'Ordem de Serviço finalizada com sucesso!');
