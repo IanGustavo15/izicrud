@@ -297,7 +297,7 @@ onMounted(
                                                     </SelectContent>
                                                 </Select>
                                                 <Label v-if="!isEditing" class="text-xs py-1" for="quantidade_peca">Quantia por Serviço</Label>
-                                                <Input v-if="!isEditing" id="quantidade_peca" type="number" min="1" v-model="form.quantidade_peca" />
+                                                <Input v-if="!isEditing" id="quantidade_peca" type="number" min="1" v-model.number="form.quantidade_peca" />
 
 
                                                 <Select v-else v-model="item.value" @update:model-value="(value) => {
@@ -321,7 +321,7 @@ onMounted(
                                                     </SelectContent>
                                                 </Select>
                                                 <Label v-if="isEditing" class="text-xs py-1" for="quantidade_peca">Quantia por Serviço</Label>
-                                                <Input v-if="isEditing" id="quantidade_peca" type="number" min="1" v-model="form.quantidade_peca" />
+                                                <Input v-if="isEditing" id="quantidade_peca" type="number" min="1" v-model.number="form.quantidade_peca" />
                                             </div>
 
                                         </div>
