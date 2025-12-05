@@ -34,11 +34,6 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
-// interface Column {
-//   key: string;
-//   label: string;
-// }
-
 const performersColumns = [
     { key: 'avatar', label: 'Profissional' },
     { key: 'especialidade', label: 'Especialidade' },
@@ -68,6 +63,11 @@ const actionEditOS = (os: Record<string , any>) => {
     router.visit(`/ordemdeservico/${os.id}/edit`);
 };
 
+const actionEditServico = (serv: Record<string, any>) => {
+    console.log(serv);
+    router.visit(`/servico/${serv.id}/edit`);
+}
+
 // Estados para os modais e funções para os modais
 const showDeleteDialog = ref(false);
 const itemToDelete = ref<number | null>(null);
@@ -77,10 +77,30 @@ function actionDeleteOS(os: any):void{
     showDeleteDialog.value = true;
 }
 
+function actionDeleteServico(serv: any):void{
+    itemToDelete.value = serv.id;
+    showDeleteDialog.value = true;
+}
+
 function confirmarExclusaoOS ():void{
 
     if (itemToDelete.value !== null) {
         router.delete(`/ordemdeservico/${itemToDelete.value}`, {
+            onSuccess: () => {
+                showDeleteDialog.value = false;
+                itemToDelete.value = null;
+            },
+            onError: () =>{
+                showDeleteDialog.value = false;
+            }
+        })
+    }
+}
+
+function confirmarExclusaoServico ():void{
+
+    if (itemToDelete.value !== null) {
+        router.delete(`/servico/${itemToDelete.value}`, {
             onSuccess: () => {
                 showDeleteDialog.value = false;
                 itemToDelete.value = null;
@@ -187,6 +207,8 @@ const props = defineProps<{
                         :data="props.servicesData"
                         :show-pagination="true"
                         :actions="true"
+                        @edit="actionEditServico"
+                        @delete="actionDeleteServico"
                     />
         </div>
 
@@ -201,6 +223,20 @@ const props = defineProps<{
                 <DialogFooter>
                     <Button variant="outline" @click="showDeleteDialog = false">Cancelar</Button>
                     <Button variant="destructive" @click="confirmarExclusaoOS">Excluir</Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+        <Dialog v-model:open="showDeleteDialog">
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Confirmar Exclusão</DialogTitle>
+                    <DialogDescription>
+                        Tem certeza de que deseja excluir este serviço? Esta ação não pode ser desfeita.
+                    </DialogDescription>
+                </DialogHeader>
+                <DialogFooter>
+                    <Button variant="outline" @click="showDeleteDialog = false">Cancelar</Button>
+                    <Button variant="destructive" @click="confirmarExclusaoServico">Excluir</Button>
                 </DialogFooter>
             </DialogContent>
         </Dialog>
