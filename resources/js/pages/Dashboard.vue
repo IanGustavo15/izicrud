@@ -212,7 +212,8 @@ const props = defineProps<{
                     />
         </div>
 
-        <Dialog v-model:open="showDeleteDialog">
+
+        <Dialog v-model:open="showDeleteDialog"><!-- actionDeleteOS -->
             <DialogContent>
                 <DialogHeader>
                     <DialogTitle>Confirmar Exclusão</DialogTitle>
@@ -226,7 +227,7 @@ const props = defineProps<{
                 </DialogFooter>
             </DialogContent>
         </Dialog>
-        <Dialog v-model:open="showDeleteDialog">
+        <Dialog v-model:open="showDeleteDialog"><!-- actionDeleteServico -->
             <DialogContent>
                 <DialogHeader>
                     <DialogTitle>Confirmar Exclusão</DialogTitle>
