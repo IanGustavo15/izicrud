@@ -62,7 +62,7 @@ tags:"Tags":pTag                     # N:N (belongsToMany)
 php artisan migrate:fresh
 
 # Donos
-php artisan make:crud Dono nome:"Nome":string email:"E-mail":email telefone:"Telefone":string
+php artisan make:crud Dono nome:"Nome":string email:"E-mail":email telefone:"Telefone":string foto:"Foto":file
 
 # Pets com relacionamento
 php artisan make:crud Pet nome:"Nome":string especie:"Espécie":string id_dono:"Dono":integer peso:"Peso":float
@@ -73,13 +73,13 @@ php artisan make:crud Servico nome:"Nome":string preco:"Preço":moeda ativo:"Ati
 # Tabela pivot
 php artisan make:crud OrdemServicoServico id_ordemservico:"Ordem de Serviço":integer id_servico:"Serviço":integer
 
-# Ordens com relacionamento N:N
-php artisan make:crud OrdemServico numero:"Número":string id_pet:"Pet":integer servicos:"Serviços":pServico valor_total:"Valor Total":moeda
+# Ordens com relacionamento N:N e documentos da consulta
+php artisan make:crud OrdemServico numero:"Número":string id_pet:"Pet":integer servicos:"Serviços":pServico valor_total:"Valor Total":moeda documentos:"Documentos":files
 
 php artisan migrate
 ```
 
-**🎯 Gera:** Sistema completo com relacionamentos belongsTo, hasMany e belongsToMany
+**🎯 Gera:** Sistema completo com relacionamentos belongsTo, hasMany e belongsToMany + upload/download de arquivos
 
 ---
 
