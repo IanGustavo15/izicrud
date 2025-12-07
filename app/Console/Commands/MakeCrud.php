@@ -849,11 +849,10 @@ VUE;
         $fileFields = array_filter($fields, fn($f) => in_array($f['type'], ['file', 'files']));
 
         if (empty($fileFields)) {
-            return $indent . "\$data = \$request->validate(\$validationRules);\n";
+            return '';
         }
 
         $code = [];
-        $code[] = $indent . "\$data = \$request->validate(\$validationRules);";
         $code[] = "";
         $code[] = $indent . "// Handle file uploads if necessary";
 
@@ -897,9 +896,9 @@ VUE;
             }
 
             // Lógica para múltiplos arquivos
-            foreach ($multipleFileFields as $field) {
+            foreach ($multipleFileFields as $index => $field) {
                 $varName = "current" . ucfirst($field['name']);
-                $code[] = $indent . "        elseif (\$removal['field'] === '{$field['name']}' && isset(\$removal['index'])) {";
+                $code[] = $indent . "        if (\$removal['field'] === '{$field['name']}' && isset(\$removal['index'])) {";
                 $code[] = $indent . "            if (isset(\${$varName}[\$removal['index']])) {";
                 $code[] = $indent . "                \$filePath = \${$varName}[\$removal['index']];";
                 $code[] = $indent . "                if (Storage::disk('public')->exists(\$filePath)) {";
@@ -908,9 +907,7 @@ VUE;
                 $code[] = $indent . "                unset(\${$varName}[\$removal['index']]);";
                 $code[] = $indent . "            }";
                 $code[] = $indent . "        }";
-            }
-
-            $code[] = $indent . "    }";
+            }            $code[] = $indent . "    }";
 
             // Reindexar arrays de múltiplos arquivos
             foreach ($multipleFileFields as $field) {
