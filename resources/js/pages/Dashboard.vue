@@ -140,12 +140,10 @@ const dadosOrdensRecentesPadrao = {
 
 // Funções para ações das tabelas de ordens
 const editarOrdem = (ordem: Record<string, any>) => {
-    // Redirecionar para edição usando o mesmo padrão do módulo original
     router.visit(`/ordemservico/${ordem.id}/edit`);
 };
 
 const excluirOrdem = (ordem: Record<string, any>) => {
-    // Confirmar exclusão usando modal como no módulo original
     confirmarExclusaoOrdem(ordem.id);
 };
 
@@ -199,8 +197,8 @@ function excluirServicoConfirmado(): void {
     <Head title="Painel" />
 
     <AppLayout :breadcrumbs="breadcrumbs">
-        <div class="flex h-full flex-1 flex-col gap-6 overflow-x-auto p-4">
-            <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <div class="flex h-full flex-1 flex-col gap-3 overflow-hidden p-2">
+            <div class="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
                 <StatsCard
                     v-for="(stat, index) in (props.dadosEstatisticas || dadosEstatisticasPadrao)"
                     :key="index"
@@ -212,7 +210,7 @@ function excluirServicoConfirmado(): void {
                 />
             </div>
 
-            <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            <div class="grid flex-1 gap-3 md:grid-cols-2 lg:grid-cols-3 min-h-0">
                 <SimpleChart
                     title="Receita Mensal"
                     type="line"
@@ -237,13 +235,13 @@ function excluirServicoConfirmado(): void {
                 />
             </div>
 
-            <div class="grid gap-4 lg:grid-cols-2">
+            <div class="grid flex-1 gap-3 lg:grid-cols-2 min-h-0">
                 <DashTable
                     title="Últimas Ordens Concluídas"
                     :columns="(props.dadosMelhoresProfissionais || dadosMelhoresProfissionaisPadrao).columns"
                     :data="(props.dadosMelhoresProfissionais || dadosMelhoresProfissionaisPadrao).data"
-                    :show-pagination="true"
-                    :items-per-page="4"
+                    :show-pagination="false"
+                    :items-per-page="3"
                     :actions="true"
                     @edit="editarOrdem"
                     @delete="excluirOrdem"
@@ -254,7 +252,8 @@ function excluirServicoConfirmado(): void {
                     :columns="(props.dadosOrdensRecentes || dadosOrdensRecentesPadrao).columns"
                     :data="(props.dadosOrdensRecentes || dadosOrdensRecentesPadrao).data"
                     :actions="true"
-                    :items-per-page="4"
+                    :items-per-page="3"
+                    :show-pagination="false"
                     @edit="editarOrdem"
                     @delete="excluirOrdem"
                 />
