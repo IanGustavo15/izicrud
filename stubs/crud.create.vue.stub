@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useForm } from '@inertiajs/vue3';
 import { Label } from '@/components/ui/label';
+import HeadingSmall from '@/components/HeadingSmall.vue';
 {{conditionalImports}}
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -19,7 +20,7 @@ const headerTitle = '{{modelPluralTitle}}';
 const headerDescription = 'Gerencie seus {{modelPluralLower}} aqui.';
 
 const props = defineProps<{
-    item?: { id: number; {{propFields}} };
+    item?: { id: number; {{propFields}}; [key: string]: any };
     sidebarNavItems: { title: string; href: string }[];
     {{dropdownProps}}
 }>();
@@ -34,8 +35,22 @@ const form = useForm({
     {{formFields}}
 });
 
+// Estados locais para gerenciamento de arquivos
+const filesToRemove = ref<{field: string, index?: number}[]>([]);
+const currentFiles = ref<{[key: string]: any}>({});
+
 const formErrors = ref<Record<string, string[]>>({});
 const descricaoMaxLength = 255;
+
+// Inicializar arquivos atuais quando editando
+if (isEditing.value && props.item) {
+    Object.keys(props.item).forEach((key: keyof typeof props.item) => {
+        const value = props.item![key];
+        if (typeof value === 'string' && value.includes('uploads/') || Array.isArray(value)) {
+            currentFiles.value[key] = Array.isArray(value) ? [...value] : value;
+        }
+    });
+}
 
 function showAlert(message: string, variant: 'success' | 'warning' | 'destructive' = 'success'): void {
     alertMessage.value = message;
@@ -44,12 +59,61 @@ function showAlert(message: string, variant: 'success' | 'warning' | 'destructiv
     setTimeout(() => showAlertState.value = false, 3000);
 }
 
+// Funções para gerenciamento de arquivos
+function downloadFile(filePath: string) {
+    // Criar um link temporário para download sem sair da página
+    const link = document.createElement('a');
+    link.href = `/storage/${filePath}`;
+    link.download = getFileName(filePath);
+    link.style.display = 'none';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+
+function removeFileLocally(fieldName: string, index?: number) {
+    if (!confirm('Tem certeza de que deseja remover este arquivo?')) {
+        return;
+    }
+
+    // Adicionar à lista de arquivos para remover
+    filesToRemove.value.push({ field: fieldName, index });
+
+    // Atualizar estado local
+    if (index !== undefined) {
+        // Múltiplos arquivos
+        if (Array.isArray(currentFiles.value[fieldName])) {
+            currentFiles.value[fieldName].splice(index, 1);
+        }
+    } else {
+        // Arquivo único
+        currentFiles.value[fieldName] = null;
+    }
+
+    showAlert('Arquivo marcado para remoção. Salve o formulário para confirmar.', 'warning');
+}
+
+function getFileName(filePath: string): string {
+    return filePath.split('/').pop() || filePath;
+}
+
 function submitForm() {
+    // Adicionar lista de arquivos para remover ao formulário
+    if (filesToRemove.value.length > 0) {
+        form.filesToRemove = filesToRemove.value;
+    }
+
     if (isEditing.value) {
-        form.put(`/{{routePrefix}}/${props.item?.id}`, {
+        // Para uploads com PUT, usar POST com _method
+        form.transform((data) => ({
+            ...data,
+            _method: 'PUT'
+        })).post(`/{{routePrefix}}/${props.item?.id}`, {
             onSuccess: () => {
                 showAlert('{{modelTitle}} atualizado com sucesso!', 'success');
                 formErrors.value = {};
+                // Limpar lista de arquivos para remover após sucesso
+                filesToRemove.value = [];
             },
             onError: (errors) => {
                 formErrors.value = errors as unknown as Record<string, string[]>;

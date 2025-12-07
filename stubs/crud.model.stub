@@ -10,7 +10,7 @@ class {{model}} extends Model
     protected $fillable = [{{fillable}}, 'deleted'];
     protected $displayLabels = [{{displayLabels}}];
 
-    // protected $casts = [{{casts}}];
+    protected $casts = [{{casts}}];
 
 {{relationships}}
 }

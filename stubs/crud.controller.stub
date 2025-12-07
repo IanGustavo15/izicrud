@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\{{model}};
 {{pivotImports}}
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class {{controller}} extends Controller
 {
@@ -37,9 +38,7 @@ class {{controller}} extends Controller
         ${{modelLower}}->update(['deleted' => 1]);
 
         return redirect()->route('{{routePrefix}}.index')->with('success', '{{modelTitle}} excluído com sucesso.');
-    }
-
-    private function getSidebarNavItems(): array
+    }    private function getSidebarNavItems(): array
     {
         return [
             ['title' => 'Todos os {{modelPluralTitle}}', 'href' => '/{{routePrefix}}'],

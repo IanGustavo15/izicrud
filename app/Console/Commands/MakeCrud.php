@@ -126,18 +126,29 @@ class MakeCrud extends Command
 
     protected function createController($controller, $model, $viewFolder, $routePrefix, $modelLower, $modelTitle, $modelPluralTitle, $fields)
     {
-        $validationRules = implode("\n            ", array_map(fn($f) => "'{$f['name']}' => 'required|" . match ($f['type']) {
-            'integer', 'bigInteger' => 'integer',
-            'float', 'double', 'decimal', 'moeda' => 'numeric',
-            'email' => 'email',
-            'date', 'datetime', 'timestamp' => 'date',
-            'boolean' => 'boolean',
-            'json' => 'json',
-            'file' => 'file',
-            'files' => 'array',
-            'pivot' => 'array', // Pivot fields são arrays de IDs
-            default => 'string'
-        } . "|max:255',", array_filter($fields, fn($f) => !$f['is_pivot'] || $f['type'] === 'pivot')));
+        $validationRules = implode("\n            ", array_map(fn($f) => "'{$f['name']}' => '" . match ($f['type']) {
+            'integer', 'bigInteger' => 'nullable|integer',
+            'float', 'double', 'decimal', 'moeda' => 'nullable|numeric',
+            'email' => 'nullable|email',
+            'date', 'datetime', 'timestamp' => 'nullable|date',
+            'boolean' => 'nullable|boolean',
+            'json' => 'nullable|json',
+            'file' => 'nullable|file|max:10240', // 10MB max
+            'files' => 'nullable|array',
+            'pivot' => 'nullable|array', // Pivot fields são arrays de IDs
+            default => 'nullable|string|max:255'
+        } . "',", array_filter($fields, fn($f) => !$f['is_pivot'] || $f['type'] === 'pivot')));
+
+        // Adicionar validação específica para arquivos múltiplos
+        $fileValidationRules = [];
+        foreach ($fields as $field) {
+            if ($field['type'] === 'files') {
+                $fileValidationRules[] = "            '{$field['name']}.*' => 'nullable|file|max:10240',";
+            }
+        }
+        if (!empty($fileValidationRules)) {
+            $validationRules .= "\n" . implode("\n", $fileValidationRules);
+        }
 
         $dropdownData = implode("\n        ", array_filter(array_map(
             function ($f) {
@@ -165,7 +176,7 @@ class MakeCrud extends Command
             {$validationRules}
         ]);
 
-{$this->generateFileUploadCode($fields, '        ')}
+{$this->generateFileUploadCode($fields, '        ', 'model', false)}
         // Remover campos pivot dos dados principais
         {$this->generatePivotDataRemoval($fields)}
         \$model = {$model}::create(\$data);
@@ -178,11 +189,8 @@ EOT;
         $updateMethod = <<<EOT
     public function update(Request \$request, {$model} \${$modelLower})
     {
-        \$data = \$request->validate([
-            {$validationRules}
-        ]);
-
-{$this->generateFileUploadCode($fields, '        ')}
+{$this->generateDynamicValidation($fields, '        ')}
+{$this->generateSimplifiedFileUploadCode($fields, '        ', $modelLower)}
         // Remover campos pivot dos dados principais
         {$this->generatePivotDataRemoval($fields)}
         \${$modelLower}->update(\$data);
@@ -264,6 +272,8 @@ EOT;
             'boolean' => 'boolean',
             'integer', 'bigInteger', 'float', 'double', 'decimal' => 'number',
             'pivot' => 'number[]',
+            'file' => 'string',
+            'files' => 'string',
             default => 'string',
         }, $fields));
 
@@ -272,8 +282,13 @@ EOT;
             $f['type'] === 'boolean' => ' || false',
             $f['type'] === 'integer' || $f['type'] === 'bigInteger' || $f['type'] === 'float' || $f['type'] === 'double' || $f['type'] === 'decimal' => ' || 0',
             $f['type'] === 'pivot' => ' || []',
+            $f['type'] === 'file' => ' || null as File | null',
+            $f['type'] === 'files' => ' || null as File[] | null',
             default => "?.toString() || ''",
         }, $fields));
+
+        // Adicionar filesToRemove aos campos do formulário
+        $formFields .= ",\n    filesToRemove: [] as {field: string, index?: number}[]";
 
         // Refatoração 1: Remover a lógica hardcoded de dropdowns
         // A lógica de props de dropdowns já é gerada no Controller,
@@ -296,8 +311,8 @@ EOT;
                 $f['type'] === 'integer' || $f['type'] === 'bigInteger' => "<div>\n                    <Label for=\"{$f['name']}\">{$f['label']}</Label>\n                    <Input id=\"{$f['name']}\" v-model.number=\"form.{$f['name']}\" type=\"number\" step=\"1\" placeholder=\"Digite {$f['label']}\" />\n                </div>",
                 $f['type'] === 'float' || $f['type'] === 'double' || $f['type'] === 'decimal' => "<div>\n                    <Label for=\"{$f['name']}\">{$f['label']}</Label>\n                    <Input id=\"{$f['name']}\" v-model.number=\"form.{$f['name']}\" type=\"number\" step=\"0.01\" placeholder=\"Digite {$f['label']}\" />\n                </div>",
                 $f['type'] === 'moeda' => "<div>\n                    <Label for=\"{$f['name']}\">{$f['label']}</Label>\n                    <Input id=\"{$f['name']}\" v-model.number=\"form.{$f['name']}\" type=\"text\" placeholder=\"Digite {$f['label']}\" @input=\"form.{$f['name']} = parseFloat(form.{$f['name']}.replace(/[R$\\s,]/g, '').replace('.', '').replace(',', '.'))\" />\n                </div>",
-                $f['type'] === 'file' => "<div>\n                    <Label for=\"{$f['name']}\">{$f['label']}</Label>\n                    <Input id=\"{$f['name']}\" v-model=\"form.{$f['name']}\" type=\"file\" />\n                </div>",
-                $f['type'] === 'files' => "<div>\n                    <Label for=\"{$f['name']}\">{$f['label']}</Label>\n                    <Input id=\"{$f['name']}\" v-model=\"form.{$f['name']}\" type=\"file\" multiple />\n                </div>",
+                $f['type'] === 'file' => $this->generateFileComponent($f),
+                $f['type'] === 'files' => $this->generateFilesComponent($f),
                 default => "<div>\n                    <Label for=\"{$f['name']}\">{$f['label']}</Label>\n                    <Input id=\"{$f['name']}\" v-model=\"form.{$f['name']}\" type=\"text\" placeholder=\"Digite {$f['label']}\" />\n                </div>",
             },
             $fields
@@ -520,7 +535,8 @@ VUE;
                     default => $f['type']
                 };
 
-                return "\$table->{$columnType}('{$f['name']}');";
+                $nullable = in_array($f['type'], ['file', 'files']) ? '->nullable()' : '';
+                return "\$table->{$columnType}('{$f['name']}'){$nullable};";
 
             }, $fields)));
 
@@ -770,7 +786,7 @@ VUE;
     /**
      * Gera o código de upload de arquivos apenas se há campos de arquivo
      */
-    private function generateFileUploadCode(array $fields, string $indent = ''): string
+    private function generateFileUploadCode(array $fields, string $indent = '', string $modelLower = 'model', bool $isUpdate = true): string
     {
         $fileFields = array_filter($fields, fn($f) => in_array($f['type'], ['file', 'files']));
 
@@ -784,19 +800,200 @@ VUE;
         foreach ($fileFields as $field) {
             if ($field['type'] === 'file') {
                 $code[] = $indent . "if (\$request->hasFile('{$field['name']}')) {";
+                if ($isUpdate) {
+                    $code[] = $indent . "    // Se há um arquivo antigo, remover";
+                    $code[] = $indent . "    if (\$oldFile = \${$modelLower}->{$field['name']}) {";
+                    $code[] = $indent . "        Storage::disk('public')->delete(\$oldFile);";
+                    $code[] = $indent . "    }";
+                }
                 $code[] = $indent . "    \$data['{$field['name']}'] = \$request->file('{$field['name']}')->store('uploads', 'public');";
                 $code[] = $indent . "}";
+                if ($isUpdate) {
+                    $code[] = $indent . "// Se não há arquivo novo, manter o existente (não incluir no \$data)";
+                }
             } elseif ($field['type'] === 'files') {
                 $code[] = $indent . "if (\$request->hasFile('{$field['name']}')) {";
-                $code[] = $indent . "    \$data['{$field['name']}'] = array_map(";
-                $code[] = $indent . "        fn(\$file) => \$file->store('uploads', 'public'),";
-                $code[] = $indent . "        \$request->file('{$field['name']}')";
-                $code[] = $indent . "    );";
+                if ($isUpdate) {
+                    $code[] = $indent . "    // Obter arquivos existentes";
+                    $code[] = $indent . "    \$existingFiles = \${$modelLower}->{$field['name']} ? (is_array(\${$modelLower}->{$field['name']}) ? \${$modelLower}->{$field['name']} : [\${$modelLower}->{$field['name']}]) : [];";
+                    $code[] = $indent . "    ";
+                    $code[] = $indent . "    // Fazer upload dos novos arquivos";
+                    $code[] = $indent . "    \$newFiles = array_map(";
+                    $code[] = $indent . "        fn(\$file) => \$file->store('uploads', 'public'),";
+                    $code[] = $indent . "        \$request->file('{$field['name']}')";
+                    $code[] = $indent . "    );";
+                    $code[] = $indent . "    ";
+                    $code[] = $indent . "    // Combinar arquivos existentes com novos";
+                    $code[] = $indent . "    \$data['{$field['name']}'] = array_merge(\$existingFiles, \$newFiles);";
+                } else {
+                    $code[] = $indent . "    \$data['{$field['name']}'] = array_map(";
+                    $code[] = $indent . "        fn(\$file) => \$file->store('uploads', 'public'),";
+                    $code[] = $indent . "        \$request->file('{$field['name']}')";
+                    $code[] = $indent . "    );";
+                }
                 $code[] = $indent . "}";
+                if ($isUpdate) {
+                    $code[] = $indent . "// Se não há arquivos novos, manter os existentes (não incluir no \$data)";
+                }
             }
         }
 
         return implode("\n", $code) . "\n";
+    }
+
+    /**
+     * Gera código simplificado de upload de arquivo para o método update
+     */
+    private function generateSimplifiedFileUploadCode(array $fields, string $indent = '', string $modelLower = 'model'): string
+    {
+        $fileFields = array_filter($fields, fn($f) => in_array($f['type'], ['file', 'files']));
+
+        if (empty($fileFields)) {
+            return $indent . "\$data = \$request->validate(\$validationRules);\n";
+        }
+
+        $code = [];
+        $code[] = $indent . "\$data = \$request->validate(\$validationRules);";
+        $code[] = "";
+        $code[] = $indent . "// Handle file uploads if necessary";
+
+        // Gerar código para arquivos únicos
+        $singleFileFields = array_filter($fileFields, fn($f) => $f['type'] === 'file');
+        foreach ($singleFileFields as $field) {
+            $code[] = $indent . "if (\$request->hasFile('{$field['name']}')) {";
+            $code[] = $indent . "    // Se há um arquivo antigo, remover";
+            $code[] = $indent . "    if (\$oldFile = \${$modelLower}->{$field['name']}) {";
+            $code[] = $indent . "        Storage::disk('public')->delete(\$oldFile);";
+            $code[] = $indent . "    }";
+            $code[] = $indent . "    \$data['{$field['name']}'] = \$request->file('{$field['name']}')->store('uploads', 'public');";
+            $code[] = $indent . "}";
+            $code[] = "";
+        }
+
+        // Gerar código para múltiplos arquivos
+        $multipleFileFields = array_filter($fileFields, fn($f) => $f['type'] === 'files');
+        foreach ($multipleFileFields as $field) {
+            $varName = "current" . ucfirst($field['name']);
+            $code[] = $indent . "// Processar campo de múltiplos arquivos";
+            $code[] = $indent . "\${$varName} = \${$modelLower}->{$field['name']} ?? [];";
+            $code[] = "";
+        }
+
+        // Gerar lógica única de remoção para todos os campos de arquivo
+        if (!empty($fileFields)) {
+            $code[] = $indent . "// Se há arquivos para remover, processar primeiro";
+            $code[] = $indent . "if (\$request->has('filesToRemove') && is_array(\$request->filesToRemove)) {";
+            $code[] = $indent . "    foreach (\$request->filesToRemove as \$removal) {";
+
+            // Lógica para arquivos únicos
+            foreach ($singleFileFields as $field) {
+                $code[] = $indent . "        if (\$removal['field'] === '{$field['name']}' && !isset(\$removal['index'])) {";
+                $code[] = $indent . "            // Arquivo único";
+                $code[] = $indent . "            if (\${$modelLower}->{$field['name']} && Storage::disk('public')->exists(\${$modelLower}->{$field['name']})) {";
+                $code[] = $indent . "                Storage::disk('public')->delete(\${$modelLower}->{$field['name']});";
+                $code[] = $indent . "            }";
+                $code[] = $indent . "            \$data['{$field['name']}'] = null;";
+                $code[] = $indent . "        }";
+            }
+
+            // Lógica para múltiplos arquivos
+            foreach ($multipleFileFields as $field) {
+                $varName = "current" . ucfirst($field['name']);
+                $code[] = $indent . "        elseif (\$removal['field'] === '{$field['name']}' && isset(\$removal['index'])) {";
+                $code[] = $indent . "            if (isset(\${$varName}[\$removal['index']])) {";
+                $code[] = $indent . "                \$filePath = \${$varName}[\$removal['index']];";
+                $code[] = $indent . "                if (Storage::disk('public')->exists(\$filePath)) {";
+                $code[] = $indent . "                    Storage::disk('public')->delete(\$filePath);";
+                $code[] = $indent . "                }";
+                $code[] = $indent . "                unset(\${$varName}[\$removal['index']]);";
+                $code[] = $indent . "            }";
+                $code[] = $indent . "        }";
+            }
+
+            $code[] = $indent . "    }";
+
+            // Reindexar arrays de múltiplos arquivos
+            foreach ($multipleFileFields as $field) {
+                $varName = "current" . ucfirst($field['name']);
+                $code[] = $indent . "    \${$varName} = array_values(\${$varName}); // Reindexar";
+            }
+
+            $code[] = $indent . "}";
+            $code[] = "";
+        }
+
+        // Gerar lógica de adição para múltiplos arquivos
+        foreach ($multipleFileFields as $field) {
+            $varName = "current" . ucfirst($field['name']);
+            $code[] = $indent . "// Se há novos arquivos para adicionar";
+            $code[] = $indent . "if (\$request->hasFile('{$field['name']}')) {";
+            $code[] = $indent . "    \$newFiles = array_map(";
+            $code[] = $indent . "        fn(\$file) => \$file->store('uploads', 'public'),";
+            $code[] = $indent . "        \$request->file('{$field['name']}')";
+            $code[] = $indent . "    );";
+            $code[] = $indent . "    \${$varName} = array_merge(\${$varName}, \$newFiles);";
+            $code[] = $indent . "}";
+            $code[] = "";
+            $code[] = $indent . "// Atualizar apenas se houve mudanças";
+            $code[] = $indent . "if (\$request->has('filesToRemove') || \$request->hasFile('{$field['name']}')) {";
+            $code[] = $indent . "    \$data['{$field['name']}'] = \${$varName};";
+            $code[] = $indent . "}";
+            $code[] = "";
+        }
+
+        return implode("\n", $code) . "\n";
+    }
+
+    /**
+     * Gera validação dinâmica que inclui arquivos apenas quando necessário
+     */
+    private function generateDynamicValidation(array $fields, string $indent = ''): string
+    {
+        $fileFields = array_filter($fields, fn($f) => in_array($f['type'], ['file', 'files']));
+        $nonFileFields = array_filter($fields, fn($f) => !in_array($f['type'], ['file', 'files']) && (!$f['is_pivot'] || $f['type'] === 'pivot'));
+
+        $code = [];
+        $code[] = $indent . "\$validationRules = [";
+
+        // Adicionar campos não-arquivo
+        foreach ($nonFileFields as $field) {
+            $rule = match ($field['type']) {
+                'string' => 'nullable|string|max:255',
+                'text' => 'nullable|string|max:255',
+                'integer' => 'nullable|integer',
+                'boolean' => 'nullable|boolean',
+                'date' => 'nullable|date',
+                'decimal', 'float' => 'nullable|numeric',
+                'moeda' => 'nullable|numeric|min:0',
+                default => 'nullable'
+            };
+            $code[] = $indent . "    '{$field['name']}' => '{$rule}',";
+        }
+
+        $code[] = $indent . "];";
+        $code[] = "";
+
+        // Adicionar validação para arquivos apenas se estão sendo enviados
+        if (!empty($fileFields)) {
+            $code[] = $indent . "// Adicionar validação para arquivos apenas se estão sendo enviados";
+            foreach ($fileFields as $field) {
+                if ($field['type'] === 'file') {
+                    $code[] = $indent . "if (\$request->hasFile('{$field['name']}')) {";
+                    $code[] = $indent . "    \$validationRules['{$field['name']}'] = 'nullable|file|max:10240';";
+                    $code[] = $indent . "}";
+                } elseif ($field['type'] === 'files') {
+                    $code[] = $indent . "if (\$request->hasFile('{$field['name']}')) {";
+                    $code[] = $indent . "    \$validationRules['{$field['name']}'] = 'nullable|array';";
+                    $code[] = $indent . "    \$validationRules['{$field['name']}.*'] = 'nullable|file|max:10240';";
+                    $code[] = $indent . "}";
+                }
+            }
+            $code[] = "";
+        }
+
+        $code[] = $indent . "\$data = \$request->validate(\$validationRules);";
+
+        return implode("\n", $code);
     }
 
     /**
@@ -999,6 +1196,87 @@ VUE;
         }
 
         return [];
+    }
+
+    /**
+     * Gera componente para campo de arquivo único com preview e gerenciamento
+     */
+    private function generateFileComponent(array $field): string
+    {
+        return "<div>
+                    <Label for=\"{$field['name']}\">{$field['label']}</Label>
+
+                    <!-- Arquivo existente -->
+                    <div v-if=\"isEditing && currentFiles.{$field['name']}\" class=\"mb-3 p-3 border rounded-lg bg-gray-50 dark:bg-gray-800\">
+                        <div class=\"flex items-center justify-between\">
+                            <div class=\"flex items-center space-x-2\">
+                                <svg class=\"w-5 h-5 text-blue-500\" fill=\"none\" stroke=\"currentColor\" viewBox=\"0 0 24 24\">
+                                    <path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z\"/>
+                                </svg>
+                                <span class=\"text-sm text-gray-600 dark:text-gray-300\">{{ getFileName(currentFiles.{$field['name']}) }}</span>
+                            </div>
+                            <div class=\"flex space-x-2\">
+                                <Button @click.prevent=\"downloadFile(currentFiles.{$field['name']})\" type=\"button\" variant=\"outline\" size=\"sm\">
+                                    <svg class=\"w-4 h-4 mr-1\" fill=\"none\" stroke=\"currentColor\" viewBox=\"0 0 24 24\">
+                                        <path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z\"/>
+                                    </svg>
+                                    Download
+                                </Button>
+                                <Button @click=\"removeFileLocally('{$field['name']}')\" type=\"button\" variant=\"destructive\" size=\"sm\">
+                                    <svg class=\"w-4 h-4 mr-1\" fill=\"none\" stroke=\"currentColor\" viewBox=\"0 0 24 24\">
+                                        <path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16\"/>
+                                    </svg>
+                                    Remover
+                                </Button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Upload de novo arquivo -->
+                    <Input id=\"{$field['name']}\" @change=\"(e: Event) => form.{$field['name']} = (e.target as HTMLInputElement).files?.[0] || null\" type=\"file\" />
+                    <p class=\"text-xs text-gray-500 mt-1\">{{ isEditing ? 'Selecione um novo arquivo para substituir o atual' : 'Selecione um arquivo' }}</p>
+                </div>";
+    }
+
+    /**
+     * Gera componente para campo de múltiplos arquivos com preview e gerenciamento
+     */
+    private function generateFilesComponent(array $field): string
+    {
+        return "<div>
+                    <Label for=\"{$field['name']}\">{$field['label']}</Label>
+
+                    <!-- Arquivos existentes -->
+                    <div v-if=\"isEditing && currentFiles.{$field['name']} && Array.isArray(currentFiles.{$field['name']}) && currentFiles.{$field['name']}.length > 0\" class=\"mb-3\">
+                        <h4 class=\"text-sm font-medium mb-2 text-gray-700 dark:text-gray-300\">Arquivos existentes:</h4>
+                        <div class=\"space-y-2\">
+                            <div v-for=\"(file, index) in currentFiles.{$field['name']}\" :key=\"index\" class=\"flex items-center justify-between p-2 border rounded bg-gray-50 dark:bg-gray-800\">
+                                <div class=\"flex items-center space-x-2\">
+                                    <svg class=\"w-4 h-4 text-blue-500\" fill=\"none\" stroke=\"currentColor\" viewBox=\"0 0 24 24\">
+                                        <path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z\"/>
+                                    </svg>
+                                    <span class=\"text-sm text-gray-600 dark:text-gray-300\">{{ getFileName(file) }}</span>
+                                </div>
+                                <div class=\"flex space-x-1\">
+                                    <Button @click.prevent=\"downloadFile(file)\" type=\"button\" variant=\"outline\" size=\"sm\">
+                                        <svg class=\"w-3 h-3\" fill=\"none\" stroke=\"currentColor\" viewBox=\"0 0 24 24\">
+                                            <path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z\"/>
+                                        </svg>
+                                    </Button>
+                                    <Button @click=\"removeFileLocally('{$field['name']}', index)\" type=\"button\" variant=\"destructive\" size=\"sm\">
+                                        <svg class=\"w-3 h-3\" fill=\"none\" stroke=\"currentColor\" viewBox=\"0 0 24 24\">
+                                            <path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16\"/>
+                                        </svg>
+                                    </Button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Upload de novos arquivos -->
+                    <Input id=\"{$field['name']}\" @change=\"(e: Event) => form.{$field['name']} = Array.from((e.target as HTMLInputElement).files || [])\" type=\"file\" multiple />
+                    <p class=\"text-xs text-gray-500 mt-1\">{{ isEditing ? 'Selecione novos arquivos para adicionar' : 'Selecione um ou mais arquivos' }}</p>
+                </div>";
     }
 
     /**

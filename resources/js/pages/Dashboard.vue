@@ -53,10 +53,7 @@ const props = defineProps<{
         columns: Coluna[];
         data: Record<string, any>[];
     };
-    dadosServicos?: {
-        columns: Coluna[];
-        data: Record<string, any>[];
-    };
+
     receitaTotal?: number;
     valorMedioPedido?: number;
     servicosAtivos?: number;
@@ -141,17 +138,6 @@ const dadosOrdensRecentesPadrao = {
     data: []
 };
 
-const dadosServicosPadrao = {
-    columns: [
-        { key: 'nome', label: 'Serviço' },
-        { key: 'categoria', label: 'Categoria' },
-        { key: 'preco', label: 'Preço' },
-        { key: 'agendamentos', label: 'Agendamentos' },
-        { key: 'status', label: 'Status' }
-    ],
-    data: []
-};
-
 // Funções para ações das tabelas de ordens
 const editarOrdem = (ordem: Record<string, any>) => {
     // Redirecionar para edição usando o mesmo padrão do módulo original
@@ -161,17 +147,6 @@ const editarOrdem = (ordem: Record<string, any>) => {
 const excluirOrdem = (ordem: Record<string, any>) => {
     // Confirmar exclusão usando modal como no módulo original
     confirmarExclusaoOrdem(ordem.id);
-};
-
-// Funções para ações das tabelas de serviços
-const editarServico = (servico: Record<string, any>) => {
-    // Redirecionar para edição do serviço
-    router.visit(`/servico/${servico.id}/edit`);
-};
-
-const excluirServico = (servico: Record<string, any>) => {
-    // Confirmar exclusão de serviço
-    confirmarExclusaoServico(servico.id);
 };
 
 // Estados para modais
@@ -284,17 +259,6 @@ function excluirServicoConfirmado(): void {
                     @delete="excluirOrdem"
                 />
             </div>
-
-            <DashTable
-                title="Serviços Populares"
-                :columns="(props.dadosServicos || dadosServicosPadrao).columns"
-                :data="(props.dadosServicos || dadosServicosPadrao).data"
-                :show-pagination="true"
-                :actions="true"
-                :items-per-page="5"
-                @edit="editarServico"
-                @delete="excluirServico"
-            />
 
         </div>
 
