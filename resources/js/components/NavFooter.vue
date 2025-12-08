@@ -8,13 +8,23 @@ import {
 } from '@/components/ui/sidebar';
 import { toUrl } from '@/lib/utils';
 import { type NavItem } from '@/types';
+import { computed } from 'vue';
 
 interface Props {
     items: NavItem[];
+    UserNivel: number;
     class?: string;
 }
 
-defineProps<Props>();
+const props = defineProps<Props>();
+
+const filteredItems = computed(() => {
+    return props.items.filter(item => {
+        if (props.UserNivel === 0) return true;
+
+        return props.UserNivel <= item.nivel;
+    });
+});
 </script>
 
 <template>
@@ -23,7 +33,7 @@ defineProps<Props>();
     >
         <SidebarGroupContent>
             <SidebarMenu>
-                <SidebarMenuItem v-for="item in items" :key="item.title">
+                <SidebarMenuItem v-for="item in filteredItems" :key="item.title">
                     <SidebarMenuButton
                         class="text-neutral-600 hover:text-neutral-800 dark:text-neutral-300 dark:hover:text-neutral-100"
                         as-child

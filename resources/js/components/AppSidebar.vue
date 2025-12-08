@@ -13,9 +13,10 @@ import {
 } from '@/components/ui/sidebar';
 import { dashboard } from '@/routes';
 // import { type NavItem } from '@/types';
-import { Link } from '@inertiajs/vue3';
+import { Link, usePage } from '@inertiajs/vue3';
 import { BookOpen, Folder, LayoutGrid } from 'lucide-vue-next';
 import AppLogo from './AppLogo.vue';
+import { computed } from 'vue';
 
 export type NavItem = {
     title: string;
@@ -23,6 +24,12 @@ export type NavItem = {
     icon: any;
     nivel: number; // Added the 'nivel' property
 };
+
+const page = usePage();
+
+const userNivel = computed(() => {
+    return (page.props.auth?.user as any)?.nivel ?? 99;
+});
 
 
 const mainNavItems: NavItem[] = [
@@ -78,12 +85,12 @@ const footerNavItems: NavItem[] = [
         </SidebarHeader>
 
         <SidebarContent>
-            <NavMain :items="mainNavItems" :UserNivel="0"/>
+            <NavMain :items="mainNavItems" :UserNivel="userNivel"/>
             <!-- <NavDev :items="devNavItems" :UserNivel="0"/> -->
         </SidebarContent>
 
         <SidebarFooter>
-            <NavFooter :items="footerNavItems" />
+            <NavFooter :items="footerNavItems" :UserNivel="userNivel" />
             <NavUser />
         </SidebarFooter>
     </Sidebar>
