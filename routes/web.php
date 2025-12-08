@@ -46,7 +46,7 @@ Route::group([
 
 // Rotas
 Route::group([
-    'middleware' => ['auth', 'verified', 'permissao:2'],
+    'middleware' => ['auth', 'verified', 'permissao:0'],
 ], function () {
     Route::controller(ServicoOrdemDeServicoController::class)->group(function () {
         Route::get('/servicoordemdeservico', 'index')->name('servicoordemdeservico.index');
@@ -76,7 +76,7 @@ Route::group([
     });
 });
 Route::group([
-    'middleware' => ['auth', 'verified', 'permissao:2'],
+    'middleware' => ['auth', 'verified', 'permissao:0'],
 ], function () {
     Route::controller(PecaServicoController::class)->group(function () {
         Route::get('/pecaservico', 'index')->name('pecaservico.index');

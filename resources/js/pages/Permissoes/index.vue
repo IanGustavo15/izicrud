@@ -10,11 +10,11 @@ import { ref, computed } from 'vue';
 import { router } from '@inertiajs/vue3';
 
 const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'Permissoes', href: '/permissoes' },
+    { title: 'Permissões', href: '/permissoes' },
 ];
 
-const headerTitle = 'Permissoes';
-const headerDescription = 'Gerencie seus permissoes aqui.';
+const headerTitle = 'Permissões';
+const headerDescription = 'Gerencie suas permissões aqui.';
 
 const props = defineProps<{
     itens: {
@@ -91,12 +91,12 @@ function deleteItem(): void {
     if (itemToDelete.value !== null) {
         router.delete(`/permissoes/${itemToDelete.value}`, {
             onSuccess: () => {
-                showAlert('Permissoes excluído com sucesso!', 'success');
+                showAlert('Permissão excluído com sucesso!', 'success');
                 showDeleteDialog.value = false;
                 itemToDelete.value = null;
             },
             onError: () => {
-                showAlert('Erro ao excluir o permissoes.', 'destructive');
+                showAlert('Erro ao excluir a permissão.', 'destructive');
                 showDeleteDialog.value = false;
             },
         });
@@ -147,7 +147,8 @@ const canGoNext = computed(() => currentPage.value < lastPage.value);
                             <TableCell>{{ item.nome }}</TableCell>
                             <TableCell>{{ item.nivel }}</TableCell>
                             <TableCell>{{ item.descricao }}</TableCell>
-                            <TableCell>{{ item.ativo }}</TableCell>
+                            <TableCell v-if="item.ativo == true">Sim</TableCell>
+                            <TableCell v-if="item.ativo == false">Não</TableCell>
                             <TableCell>
                                 <ul class="flex flex-row gap-4">
                                     <li>
@@ -181,7 +182,7 @@ const canGoNext = computed(() => currentPage.value < lastPage.value);
                 <div class="flex items-center justify-between px-4 py-2">
                     <div>
                         <p class="text-sm text-gray-700">
-                            Mostrando {{ filteredItens.length }} de {{ props.itens.total }} permissoes
+                            Mostrando {{ filteredItens.length }} de {{ props.itens.total }} permissões
                         </p>
                     </div>
                     <div class="flex gap-2">
@@ -197,7 +198,7 @@ const canGoNext = computed(() => currentPage.value < lastPage.value);
                     <DialogHeader>
                         <DialogTitle>Confirmar Exclusão</DialogTitle>
                         <DialogDescription>
-                            Tem certeza de que deseja excluir este permissoes? Esta ação não pode ser desfeita.
+                            Tem certeza de que deseja excluir esta permissão? Esta ação não pode ser desfeita.
                         </DialogDescription>
                     </DialogHeader>
                     <DialogFooter>

@@ -15,6 +15,8 @@ class PermissoesController extends Controller
         $items = Permissoes::where('deleted', 0)->orderBy('id', 'desc')->paginate(9);
         $allItems = Permissoes::where('deleted', 0)->orderBy('id', 'desc')->get();
 
+        // dd($items);
+
         return inertia('Permissoes/index', [
             'itens' => $items,
             'allItens' => $allItems,
@@ -36,8 +38,9 @@ class PermissoesController extends Controller
             'nome' => 'required|string|max:255',
             'nivel' => 'required|integer|max:255',
             'descricao' => 'required|string|max:255',
-            'ativo' => 'required|boolean|max:255',
+            'ativo' => 'required|boolean',
         ]);
+
 
         Permissoes::create($request->all());
 
@@ -62,7 +65,7 @@ class PermissoesController extends Controller
             'nome' => 'required|string|max:255',
             'nivel' => 'required|integer|max:255',
             'descricao' => 'required|string|max:255',
-            'ativo' => 'required|boolean|max:255',
+            'ativo' => 'required|boolean',
         ]);
 
         $permissoes->update($request->all());
