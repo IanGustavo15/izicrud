@@ -14,7 +14,7 @@ import {
 import { dashboard } from '@/routes';
 // import { type NavItem } from '@/types';
 import { Link } from '@inertiajs/vue3';
-import { BookOpen, Folder, LayoutGrid } from 'lucide-vue-next';
+import { BookOpen, Folder, LayoutGrid, Car, UserRound, Cog, LayoutDashboard, Github, Waypoints, ScrollText, Wrench } from 'lucide-vue-next';
 import AppLogo from './AppLogo.vue';
 
 export type NavItem = {
@@ -29,7 +29,7 @@ const mainNavItems: NavItem[] = [
     {
         title: 'Dashboard',
         href:  '/dashboard',
-        icon: LayoutGrid,
+        icon: LayoutDashboard ,
         nivel: 99,
     },
 
@@ -37,49 +37,49 @@ const mainNavItems: NavItem[] = [
 {
     title: 'Clientes',
     href: '/cliente',
-    icon: LayoutGrid,
+    icon: UserRound,
     nivel: 1,
 },
 
 {
     title: 'Veículos',
     href: '/veiculo',
-    icon: LayoutGrid,
+    icon: Car,
     nivel: 1,
 },
 
 {
     title: 'Peças',
     href: '/peca',
-    icon: LayoutGrid,
+    icon: Cog ,
     nivel: 1,
 },
 
 {
     title: 'Serviços',
     href: '/servico',
-    icon: LayoutGrid,
+    icon: Wrench,
     nivel: 3,
 },
 
 {
     title: 'Pivot PecaServicos',
     href: '/pecaservico',
-    icon: LayoutGrid,
+    icon: Waypoints,
     nivel: 2,
 },
 
 {
-    title: 'OrdemDeServicos',
+    title: 'Ordens de Serviço',
     href: '/ordemdeservico',
-    icon: LayoutGrid,
+    icon: ScrollText ,
     nivel: 3,
 },
 
 {
     title: 'Pivot ServicoOrdemDeServicos',
     href: '/servicoordemdeservico',
-    icon: LayoutGrid,
+    icon: Waypoints,
     nivel: 2,
 },
 
@@ -93,7 +93,7 @@ const footerNavItems: NavItem[] = [
     {
         title: 'Github Repo',
         href: 'https://github.com/NicolasKovsky/izicrud',
-        icon: Folder,
+        icon: Github ?? LayoutGrid,
         nivel: 99
     },
     // {
