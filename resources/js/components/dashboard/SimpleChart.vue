@@ -1,3 +1,172 @@
+<!--
+  SimpleChart Component - Gráficos simples e interativos para dashboard
+
+  DESCRIÇÃO:
+  Componente de gráfico responsivo e interativo construído com SVG nativo.
+  Oferece três tipos de visualização (linha, barra, donut) com tooltips,
+  legendas opcionais e animações suaves. Otimizado para dashboards com
+  dados em tempo real.
+
+  FUNCIONALIDADES:
+  - ✅ Três tipos de gráfico: line, bar, donut
+  - ✅ Tooltips interativos com hover
+  - ✅ Legendas opcionais com porcentagens
+  - ✅ Animações e transições suaves
+  - ✅ Grid lines para melhor leitura
+  - ✅ Cores personalizáveis
+  - ✅ Estado de loading
+  - ✅ Responsivo e acessível
+  - ✅ Sanitização automática de dados
+  - ✅ Suporte a dark mode
+
+  INTERFACE DE DADOS:
+  interface ChartDataPoint {
+    label: string;  // Rótulo do ponto (ex: "Jan", "Vendas")
+    value: number;  // Valor numérico
+  }
+
+  PROPS:
+  - title: string (obrigatório) - Título do gráfico
+  - type: 'line' | 'bar' | 'donut' (obrigatório) - Tipo de gráfico
+  - data: ChartDataPoint[] (obrigatório) - Array de dados
+  - color?: string - Cor principal (hex: "#3b82f6")
+  - showLegend?: boolean - Exibir legenda
+  - loading?: boolean - Estado de carregamento
+  - actions?: boolean - Exibir área de ações
+
+  TIPOS DE GRÁFICO:
+
+  1. LINE (Linha):
+     - Ideal para: Tendências temporais, evolução de métricas
+     - Features: Área preenchida, pontos interativos, grid
+     - Exemplo: Receita mensal, visitantes diários
+
+  2. BAR (Barras):
+     - Ideal para: Comparações categóricas, rankings
+     - Features: Barras com hover, labels no eixo X
+     - Exemplo: Vendas por produto, atendimentos por mês
+
+  3. DONUT (Pizza/Rosca):
+     - Ideal para: Distribuição de partes do todo
+     - Features: Segmentos coloridos, total no centro, porcentagens
+     - Exemplo: Tipos de clientes, distribuição de vendas
+
+  EXEMPLO DE USO - GRÁFICO DE LINHA:
+  <SimpleChart
+    title="Receita Mensal"
+    type="line"
+    :data="[
+      { label: 'Jan', value: 12000 },
+      { label: 'Fev', value: 15000 },
+      { label: 'Mar', value: 13500 },
+      { label: 'Abr', value: 18000 }
+    ]"
+    color="#3b82f6"
+    :show-legend="false"
+  />
+
+  EXEMPLO DE USO - GRÁFICO DE BARRAS:
+  <SimpleChart
+    title="Atendimentos por Especialidade"
+    type="bar"
+    :data="[
+      { label: 'Clínica', value: 45 },
+      { label: 'Cirurgia', value: 23 },
+      { label: 'Emergência', value: 67 },
+      { label: 'Preventivo', value: 34 }
+    ]"
+    color="#10b981"
+    :show-legend="false"
+  />
+
+  EXEMPLO DE USO - GRÁFICO DONUT:
+  <SimpleChart
+    title="Distribuição por Espécie"
+    type="donut"
+    :data="[
+      { label: 'Cães', value: 156 },
+      { label: 'Gatos', value: 89 },
+      { label: 'Aves', value: 23 },
+      { label: 'Outros', value: 12 }
+    ]"
+    :show-legend="true"
+  />
+
+  EXEMPLO COM AÇÕES PERSONALIZADAS:
+  <SimpleChart
+    title="Vendas por Período"
+    type="line"
+    :data="dadosVendas"
+    :actions="true"
+    :loading="carregando"
+  >
+    <template #actions>
+      <Button @click="exportar" size="sm" variant="outline">
+        Exportar
+      </Button>
+      <Button @click="atualizar" size="sm">
+        Atualizar
+      </Button>
+    </template>
+  </SimpleChart>
+
+  FORMATAÇÃO DE DADOS NO CONTROLLER:
+  // Laravel Controller exemplo:
+  private function obterGraficoReceita() {
+    $dados = [];
+    for ($i = 6; $i >= 0; $i--) {
+      $inicio = now()->subMonths($i)->startOfMonth();
+      $receita = OrdemServico::whereBetween('created_at', [$inicio, $inicio->copy()->endOfMonth()])
+        ->sum('valor_total');
+
+      $dados[] = [
+        'label' => $inicio->format('M/y'),
+        'value' => (float) $receita
+      ];
+    }
+    return $dados;
+  }
+
+  CORES RECOMENDADAS:
+  - Azul: "#3b82f6" (dados neutros, receita)
+  - Verde: "#10b981" (crescimento, sucesso)
+  - Vermelho: "#ef4444" (alertas, perdas)
+  - Roxo: "#8b5cf6" (categorias, distribuição)
+  - Laranja: "#f59e0b" (atenção, metas)
+  - Ciano: "#06b6d4" (informações, secundário)
+
+  TOOLTIPS AUTOMÁTICOS:
+  O componente exibe automaticamente:
+  - Para line/bar: "Label: Valor"
+  - Para donut: "Label: Valor (Porcentagem%)"
+  - Formatação de números em pt-BR
+
+  RESPONSIVIDADE:
+  - SVG viewBox se adapta ao container
+  - Tooltips seguem o cursor
+  - Legenda quebra em múltiplas linhas
+  - Funciona bem em mobile
+
+  PERFORMANCE:
+  - Sanitização automática de dados
+  - Proteção contra dados inválidos
+  - Lazy loading de tooltips
+  - Animações otimizadas com CSS
+
+  DICAS DE USO:
+  1. Use máximo 7-8 pontos em gráficos de linha para legibilidade
+  2. Gráficos de barra funcionam bem com até 6 categorias
+  3. Gráficos donut são ideais para 3-6 segmentos
+  4. Sempre teste com dados vazios/inválidos
+  5. Use show-legend="true" apenas quando necessário
+  6. Cores devem ter contraste adequado com o fundo
+
+  TRATAMENTO DE ERROS:
+  - Dados undefined/null são tratados automaticamente
+  - Valores não-numéricos são convertidos para 0
+  - Labels vazias recebem "Sem label"
+  - Divisão por zero é prevenida
+-->
 <template>
   <div class="rounded-xl border border-sidebar-border/70 bg-white p-6 shadow-sm dark:border-sidebar-border dark:bg-sidebar-accent">
     <div class="flex items-center justify-between mb-4">
