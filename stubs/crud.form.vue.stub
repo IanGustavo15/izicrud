@@ -1,0 +1,99 @@
+<script setup lang="ts">
+import { ref } from 'vue';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+{{conditionalImports}}
+
+const props = defineProps<{
+    item?: { {{propFields}}; [key: string]: any };
+    isEditing?: boolean;
+    processing?: boolean;
+    {{dropdownProps}}
+}>();
+
+const emit = defineEmits<{
+    submit: [formData: FormData];
+    alert: [message: string, variant?: 'success' | 'warning' | 'destructive'];
+}>();
+
+// Estados locais para gerenciamento de arquivos
+const filesToRemove = ref<{field: string, index?: number}[]>([]);
+const currentFiles = ref<{[key: string]: any}>({});
+
+// Form refs
+{{formRefs}}
+
+// Inicializar arquivos atuais quando editando
+if (props.isEditing && props.item) {
+    Object.keys(props.item).forEach((key: keyof typeof props.item) => {
+        const value = props.item![key];
+        if (typeof value === 'string' && value.includes('uploads/') || Array.isArray(value)) {
+            currentFiles.value[key] = Array.isArray(value) ? [...value] : value;
+        }
+    });
+}
+
+// Funções para gerenciamento de arquivos
+function downloadFile(filePath: string) {
+    const link = document.createElement('a');
+    link.href = `/storage/${filePath}`;
+    link.download = getFileName(filePath);
+    link.style.display = 'none';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+
+function removeFileLocally(fieldName: string, index?: number) {
+    if (!confirm('Tem certeza de que deseja remover este arquivo?')) {
+        return;
+    }
+
+    filesToRemove.value.push({ field: fieldName, index });
+
+    if (index !== undefined) {
+        if (Array.isArray(currentFiles.value[fieldName])) {
+            currentFiles.value[fieldName].splice(index, 1);
+        }
+    } else {
+        currentFiles.value[fieldName] = null;
+    }
+
+    emit('alert', 'Arquivo marcado para remoção. Salve o formulário para confirmar.', 'warning');
+}
+
+function getFileName(filePath: string): string {
+    return filePath.split('/').pop() || filePath;
+}
+
+function submitForm() {
+    const formData = new FormData();
+
+    {{formDataAppend}}
+
+    // Arquivos para remover
+    if (filesToRemove.value.length > 0) {
+        formData.append('filesToRemove', JSON.stringify(filesToRemove.value));
+    }
+
+    // Se for edição, adicionar _method
+    if (props.isEditing) {
+        formData.append('_method', 'PUT');
+    }
+
+    emit('submit', formData);
+}
+
+{{fileHandlers}}
+</script>
+
+<template>
+    <form @submit.prevent="submitForm" class="space-y-6">
+        {{formInputs}}
+
+        <Button type="submit" class="my-4" :disabled="processing">
+            {{ isEditing ? 'Atualizar {{modelTitle}}' : 'Criar {{modelTitle}}' }}
+        </Button>
+    </form>
+</template>

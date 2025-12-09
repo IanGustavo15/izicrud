@@ -12,9 +12,9 @@ use Illuminate\Database\Migrations\Migration;
 class MakeCrud extends Command
 {
 
-    protected $signature = 'make:crud {modelName : Nome do modelo (ex: Post)} {fields?* : Campos no formato nome:"Nome da Coluna":tipo (ex: title:"Título":string ou servicos:"Serviços":pServico)}';
+    protected $signature = 'make:crud {modelName : Nome do modelo (ex: Post)} {fields?* : Campos no formato nome:"Nome da Coluna":tipo (ex: title:"Título":string ou servicos:"Serviços":pServico)} {--c : Gera formulários componentizados}';
 
-    protected $description = 'Gera um CRUD completo com modelo, controlador, views Vue, migração, rotas e item de menu no sidebar. Suporta relacionamentos 1:1 (id_campo) e 1:N (pModelo).';
+    protected $description = 'Gera um CRUD completo com modelo, controlador, views Vue, migração, rotas e item de menu no sidebar. Suporta relacionamentos 1:1 (id_campo) e 1:N (pModelo). Use --c para gerar formulários em componentes separados.';
 
     public function handle()
     {
@@ -29,10 +29,11 @@ class MakeCrud extends Command
         $modelPluralLower = strtolower($modelPluralTitle);
 
         $fields = $this->parseFields($this->argument('fields'));
+        $componentized = $this->option('c');
 
         $this->createModel($model, $fields);
         $this->createController($controller, $model, $viewFolder, $routePrefix, $modelLower, $modelTitle, $modelPluralTitle, $fields);
-        $this->createViews($viewFolder, $routePrefix, $model, $modelLower, $modelTitle, $modelPluralTitle, $modelPluralLower, $fields);
+        $this->createViews($viewFolder, $routePrefix, $model, $modelLower, $modelTitle, $modelPluralTitle, $modelPluralLower, $fields, $componentized);
         $this->appendControllerImport($controller);
         $this->appendRoutes($controller, $routePrefix);
         $this->appendMenuItem($modelPluralTitle, $routePrefix);
@@ -263,11 +264,20 @@ EOT;
         )));
     }
 
-    protected function createViews($viewFolder, $routePrefix, $model, $modelLower, $modelTitle, $modelPluralTitle, $modelPluralLower, $fields)
+    protected function createViews($viewFolder, $routePrefix, $model, $modelLower, $modelTitle, $modelPluralTitle, $modelPluralLower, $fields, $componentized = false)
     {
         $viewPath = resource_path("js/pages/{$viewFolder}");
         File::ensureDirectoryExists($viewPath);
 
+        if ($componentized) {
+            $this->createComponentizedViews($viewFolder, $viewPath, $routePrefix, $model, $modelLower, $modelTitle, $modelPluralTitle, $modelPluralLower, $fields);
+        } else {
+            $this->createStandardViews($viewFolder, $viewPath, $routePrefix, $model, $modelLower, $modelTitle, $modelPluralTitle, $modelPluralLower, $fields);
+        }
+    }
+
+    protected function createStandardViews($viewFolder, $viewPath, $routePrefix, $model, $modelLower, $modelTitle, $modelPluralTitle, $modelPluralLower, $fields)
+    {
         $propFields = implode('; ', array_map(fn($f) => "{$f['name']}: " . match ($f['type']) {
             'boolean' => 'boolean',
             'integer', 'bigInteger', 'float', 'double', 'decimal' => 'number',
@@ -340,13 +350,6 @@ EOT;
         $hasPivotFields = array_filter($fields, fn($f) => $f['is_pivot']);
         $relationshipImport = $hasPivotFields ? "\nimport RelationshipManyField from '@/components/RelationshipManyField.vue';" : '';
 
-    //     $createStub = str_replace(
-    //         '<script setup>',
-    //         "<script setup>\n{$selectImports}\n\nconst props = defineProps<{\n    item?: Record<string, any>;\n    sidebarNavItems: { title: string; href: string }[];\n    // TODO: Ajustar a prop 'usuarios' para ser dinâmica conforme o model relacionado
-    // usuarios: { id: number; name: string }[];\n    {$dropdownProps}\n}>();\n\n", // Removido $dropdownOptions
-    //         $createStub
-    //     );
-
         $createStub = str_replace(
             ['{{modelPluralTitle}}', '{{routePrefix}}', '{{modelPluralLower}}', '{{modelTitle}}', '{{modelLower}}', '{{propFields}}', '{{formFields}}', '{{formInputs}}', '{{dropdownProps}}', '{{conditionalImports}}'],
             [$modelPluralTitle, $routePrefix, $modelPluralLower, $modelTitle, $modelLower, $propFields, $formFields, $formInputs, $dropdownProps, $conditionalImports],
@@ -375,6 +378,152 @@ EOT;
         $indexStub = str_replace(
             ['{{modelPluralTitle}}', '{{routePrefix}}', '{{modelPluralLower}}', '{{modelTitle}}', '{{modelLower}}', '{{tableHeaders}}', '{{tableCells}}', '{{filterConditions}}', '{{propFields}}'],
             [$modelPluralTitle, $routePrefix, $modelPluralLower, $modelTitle, $modelLower, $tableHeaders, $tableCells, $filterConditions, $propFields],
+            $indexStub
+        );
+
+        File::put("{$viewPath}/index.vue", $indexStub);
+    }
+
+    protected function createComponentizedViews($viewFolder, $viewPath, $routePrefix, $model, $modelLower, $modelTitle, $modelPluralTitle, $modelPluralLower, $fields)
+    {
+        // Criar diretório de componentes
+        $componentsPath = "{$viewPath}/components";
+        File::ensureDirectoryExists($componentsPath);
+
+        // Gerar props do componente
+        $propFields = implode('; ', array_map(fn($f) => "{$f['name']}: " . match ($f['type']) {
+            'boolean' => 'boolean',
+            'integer', 'bigInteger', 'float', 'double', 'decimal' => 'number',
+            'pivot' => 'number[]',
+            'file' => 'string',
+            'files' => 'string',
+            default => 'string',
+        }, $fields));
+
+        // Gerar refs dos campos do formulário
+        $formRefs = implode("\n", array_map(fn($f) => "const {$f['name']}Ref = ref(" . match (true) {
+            $f['type'] === 'boolean' => 'props.item?.' . $f['name'] . ' || false',
+            $f['type'] === 'integer' || $f['type'] === 'bigInteger' || $f['type'] === 'float' || $f['type'] === 'double' || $f['type'] === 'decimal' => 'props.item?.' . $f['name'] . ' || 0',
+            $f['type'] === 'pivot' => 'props.item?.' . $f['name'] . ' || []',
+            $f['type'] === 'file' || $f['type'] === 'files' => 'null as File | null',
+            default => "props.item?.{$f['name']}?.toString() || ''",
+        } . ");", $fields));
+
+        // Gerar FormData append
+        $formDataAppend = implode("\n\n    ", array_map(fn($f) => match (true) {
+            $f['type'] === 'file' => "// Arquivo\n    if ({$f['name']}Ref.value) {\n        formData.append('{$f['name']}', {$f['name']}Ref.value);\n    }",
+            $f['type'] === 'files' => "// Arquivos múltiplos\n    if ({$f['name']}Ref.value) {\n        {$f['name']}Ref.value.forEach((file, index) => {\n            formData.append(`{$f['name']}[]`, file);\n        });\n    }",
+            $f['type'] === 'pivot' => "// Pivot data will be handled separately",
+            default => "formData.append('{$f['name']}', {$f['name']}Ref.value);",
+        }, $fields));
+
+        // Gerar inputs do formulário para componente
+        $formInputs = implode("\n\n        ", array_map(
+            fn($f) => match (true) {
+                $f['is_foreign'] => $this->generateSelectComponentForForm($f),
+                $f['is_pivot'] => $this->generateRelationshipComponentForForm($f),
+                $f['type'] === 'boolean' => "<div class=\"flex items-center space-x-2\">\n            <Checkbox id=\"{$f['name']}\" v-model=\"{$f['name']}Ref\" />\n            <Label for=\"{$f['name']}\">{$f['label']}</Label>\n        </div>",
+                $f['type'] === 'text' => "<div>\n            <Label for=\"{$f['name']}\">{$f['label']}</Label>\n            <Textarea id=\"{$f['name']}\" v-model=\"{$f['name']}Ref\" placeholder=\"Digite {$f['label']}\" rows=\"4\" />\n        </div>",
+                $f['type'] === 'date' || $f['type'] === 'datetime' || $f['type'] === 'timestamp' => "<div>\n            <Label for=\"{$f['name']}\">{$f['label']}</Label>\n            <Input id=\"{$f['name']}\" v-model=\"{$f['name']}Ref\" type=\"" . ($f['type'] === 'date' ? 'date' : 'datetime-local') . "\" />\n        </div>",
+                $f['type'] === 'email' => "<div>\n            <Label for=\"{$f['name']}\">{$f['label']}</Label>\n            <Input id=\"{$f['name']}\" v-model=\"{$f['name']}Ref\" type=\"email\" placeholder=\"Digite {$f['label']}\" />\n        </div>",
+                $f['type'] === 'integer' || $f['type'] === 'bigInteger' => "<div>\n            <Label for=\"{$f['name']}\">{$f['label']}</Label>\n            <Input id=\"{$f['name']}\" v-model.number=\"{$f['name']}Ref\" type=\"number\" step=\"1\" placeholder=\"Digite {$f['label']}\" />\n        </div>",
+                $f['type'] === 'float' || $f['type'] === 'double' || $f['type'] === 'decimal' => "<div>\n            <Label for=\"{$f['name']}\">{$f['label']}</Label>\n            <Input id=\"{$f['name']}\" v-model.number=\"{$f['name']}Ref\" type=\"number\" step=\"0.01\" placeholder=\"Digite {$f['label']}\" />\n        </div>",
+                $f['type'] === 'file' => $this->generateFileComponentForForm($f),
+                $f['type'] === 'files' => $this->generateFilesComponentForForm($f),
+                default => "<div>\n            <Label for=\"{$f['name']}\">{$f['label']}</Label>\n            <Input id=\"{$f['name']}\" v-model=\"{$f['name']}Ref\" type=\"text\" placeholder=\"Digite {$f['label']}\" />\n        </div>",
+            },
+            $fields
+        ));
+
+        // Gerar imports condicionalmente
+        $conditionalImports = $this->generateConditionalImports($fields);
+
+        // Props para dropdowns
+        $dropdownProps = implode("\n    ", array_filter(array_map(
+            function ($f) {
+                if ($f['is_foreign']) {
+                    return "{$f['name']}Options?: { value: number; label: string }[];";
+                } elseif ($f['is_pivot']) {
+                    return "{$f['name']}Options?: { value: number; label: string }[];";
+                }
+                return '';
+            },
+            $fields
+        )));
+
+        // Props passadas para o componente na página principal
+        $formComponentProps = implode("\n                        ", array_filter(array_map(
+            function ($f) {
+                if ($f['is_foreign'] || $f['is_pivot']) {
+                    return ":{$f['name']}-options=\"props.{$f['name']}Options\"";
+                }
+                return '';
+            },
+            $fields
+        )));
+
+        // Gerar handlers de arquivo
+        $fileHandlers = implode("\n\n", array_filter(array_map(fn($f) => match ($f['type']) {
+            'file' => "function handle" . ucfirst($f['name']) . "Change(event: Event) {\n    const target = event.target as HTMLInputElement;\n    const file = target.files?.[0] || null;\n    {$f['name']}Ref.value = file;\n}",
+            'files' => "function handle" . ucfirst($f['name']) . "Change(event: Event) {\n    const target = event.target as HTMLInputElement;\n    const files = Array.from(target.files || []);\n    {$f['name']}Ref.value = files;\n}",
+            default => null,
+        }, $fields)));
+
+        // Criar o componente de formulário
+        $formStub = File::get(base_path('stubs/crud.form.vue.stub'));
+        $formStub = str_replace(
+            ['{{conditionalImports}}', '{{propFields}}', '{{dropdownProps}}', '{{formRefs}}', '{{formDataAppend}}', '{{formInputs}}', '{{fileHandlers}}', '{{modelTitle}}'],
+            [$conditionalImports, $propFields, $dropdownProps, $formRefs, $formDataAppend, $formInputs, $fileHandlers, $modelTitle],
+            $formStub
+        );
+
+        File::put("{$componentsPath}/{$model}Form.vue", $formStub);
+
+        // Criar a página principal componentizada
+        $createStub = File::get(base_path('stubs/crud.create.componentized.vue.stub'));
+        $createStub = str_replace(
+            ['{{model}}', '{{modelPluralTitle}}', '{{routePrefix}}', '{{modelPluralLower}}', '{{modelTitle}}', '{{modelLower}}', '{{propFields}}', '{{dropdownProps}}', '{{formComponentProps}}'],
+            [$model, $modelPluralTitle, $routePrefix, $modelPluralLower, $modelTitle, $modelLower, $propFields, $dropdownProps, $formComponentProps],
+            $createStub
+        );
+
+        File::put("{$viewPath}/create.vue", $createStub);
+
+        // Criar a página index (reutilizar o método padrão)
+        $this->createIndexView($viewPath, $routePrefix, $modelTitle, $modelPluralTitle, $modelLower, $fields);
+    }
+
+    protected function createIndexView($viewPath, $routePrefix, $modelTitle, $modelPluralTitle, $modelLower, $fields)
+    {
+        // Processar os campos para a tabela
+        $tableHeaders = implode("\n                            ", array_map(
+            fn($f) => "<TableHead class=\"cursor-pointer\" @click=\"toggleSort('{$f['name']}')\">{$f['label']}<span v-if=\"sortColumn === '{$f['name']}'\" class=\"ml-2\">{{ sortDirection === 'asc' ? '↑' : '↓' }}</span></TableHead>",
+            $fields
+        ));
+
+        $tableCells = implode("\n                            ", array_map(
+            fn($f) => "<TableCell>{{ item.{$f['name']} }}</TableCell>",
+            $fields
+        ));
+
+        $filterConditions = implode(' || ', array_map(
+            fn($f) => "(item.{$f['name']} || '').toString().toLowerCase().includes(query)",
+            $fields
+        ));
+
+        $propFields = implode('; ', array_map(fn($f) => "{$f['name']}: " . match ($f['type']) {
+            'boolean' => 'boolean',
+            'integer', 'bigInteger', 'float', 'double', 'decimal' => 'number',
+            'pivot' => 'number[]',
+            'file' => 'string',
+            'files' => 'string',
+            default => 'string',
+        }, $fields));
+
+        $indexStub = File::get(base_path('stubs/crud.index.vue.stub'));
+        $indexStub = str_replace(
+            ['{{modelPluralTitle}}', '{{routePrefix}}', '{{modelPluralLower}}', '{{modelTitle}}', '{{modelLower}}', '{{tableHeaders}}', '{{tableCells}}', '{{filterConditions}}', '{{propFields}}'],
+            [$modelPluralTitle, $routePrefix, strtolower($modelPluralTitle), $modelTitle, $modelLower, $tableHeaders, $tableCells, $filterConditions, $propFields],
             $indexStub
         );
 
@@ -1296,5 +1445,144 @@ VUE;
         $table1 = strtolower($model1);
         $table2 = strtolower($model2);
         return $table1 . $table2 . 's';
+    }
+
+    /**
+     * Gera componente Select para formulário componentizado
+     */
+    private function generateSelectComponentForForm(array $field): string
+    {
+        $propName = "{$field['name']}Options";
+        $label = $field['label'];
+        $fieldName = $field['name'];
+
+        return <<<VUE
+<div>
+            <Label for="{$fieldName}">{$label}</Label>
+            <Select v-model="{$fieldName}Ref">
+                <SelectTrigger>
+                    <SelectValue placeholder="Selecione {$label}" />
+                </SelectTrigger>
+                <SelectContent>
+                    <SelectItem v-for="option in props.{$propName}" :key="option.value" :value="option.value.toString()">{{ option.label }}</SelectItem>
+                </SelectContent>
+            </Select>
+        </div>
+VUE;
+    }
+
+    /**
+     * Gera componente de relacionamento para formulário componentizado
+     */
+    private function generateRelationshipComponentForForm(array $field): string
+    {
+        $propName = "{$field['name']}Options";
+        $label = $field['label'];
+        $fieldName = $field['name'];
+
+        return <<<VUE
+<div>
+            <RelationshipManyField
+                v-model="{$fieldName}Ref"
+                :options="props.{$propName} || []"
+                label="{$label}"
+                placeholder="Selecione {$label}"
+            />
+        </div>
+VUE;
+    }
+
+    /**
+     * Gera componente de arquivo para formulário componentizado
+     */
+    private function generateFileComponentForForm(array $field): string
+    {
+        $fieldName = $field['name'];
+        $label = $field['label'];
+        $handlerName = 'handle' . ucfirst($fieldName) . 'Change';
+
+        return <<<VUE
+<div>
+            <Label for="{$fieldName}">{$label}</Label>
+
+            <!-- Arquivo existente -->
+            <div v-if="isEditing && currentFiles.{$fieldName}" class="mb-3 p-3 border rounded-lg bg-gray-50 dark:bg-gray-800">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-2">
+                        <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                        <span class="text-sm text-gray-600 dark:text-gray-300">{{ getFileName(currentFiles.{$fieldName}) }}</span>
+                    </div>
+                    <div class="flex space-x-2">
+                        <Button @click.prevent="downloadFile(currentFiles.{$fieldName})" type="button" variant="outline" size="sm">
+                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                            </svg>
+                            Download
+                        </Button>
+                        <Button @click="removeFileLocally('{$fieldName}')" type="button" variant="destructive" size="sm">
+                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                            </svg>
+                            Remover
+                        </Button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Upload de novo arquivo -->
+            <Input id="{$fieldName}" @change="{$handlerName}" type="file" />
+            <p class="text-xs text-gray-500 mt-1">{{ isEditing ? 'Selecione um novo arquivo para substituir o atual' : 'Selecione um arquivo' }}</p>
+        </div>
+VUE;
+    }
+
+    /**
+     * Gera componente de arquivos múltiplos para formulário componentizado
+     */
+    private function generateFilesComponentForForm(array $field): string
+    {
+        $fieldName = $field['name'];
+        $label = $field['label'];
+        $handlerName = 'handle' . ucfirst($fieldName) . 'Change';
+
+        return <<<VUE
+<div>
+            <Label for="{$fieldName}">{$label}</Label>
+
+            <!-- Arquivos existentes -->
+            <div v-if="isEditing && currentFiles.{$fieldName} && currentFiles.{$fieldName}.length > 0" class="mb-3">
+                <div v-for="(file, index) in currentFiles.{$fieldName}" :key="index" class="mb-2 p-3 border rounded-lg bg-gray-50 dark:bg-gray-800">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-2">
+                            <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                            </svg>
+                            <span class="text-sm text-gray-600 dark:text-gray-300">{{ getFileName(file) }}</span>
+                        </div>
+                        <div class="flex space-x-2">
+                            <Button @click.prevent="downloadFile(file)" type="button" variant="outline" size="sm">
+                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                </svg>
+                                Download
+                            </Button>
+                            <Button @click="removeFileLocally('{$fieldName}', index)" type="button" variant="destructive" size="sm">
+                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                </svg>
+                                Remover
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Upload de novos arquivos -->
+            <Input id="{$fieldName}" @change="{$handlerName}" type="file" multiple />
+            <p class="text-xs text-gray-500 mt-1">{{ isEditing ? 'Selecione novos arquivos para adicionar' : 'Selecione arquivos' }}</p>
+        </div>
+VUE;
     }
 }

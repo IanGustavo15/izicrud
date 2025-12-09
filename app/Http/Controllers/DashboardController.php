@@ -22,90 +22,91 @@ class DashboardController extends Controller
             'dadosCategorias' => $this->obterGraficoCategorias(),
             'dadosMelhoresProfissionais' => $this->obterTabelaPerformers(),
             'dadosOrdensRecentes' => $this->obterTabelaPedidos(),
-            'dadosServicos' => $this->obterTabelaServicos(),
             'receitaTotal' => $this->receitaTotal(),
             'valorMedioPedido' => $this->valorMedioPedido(),
             'servicosAtivos' => $this->servicosAtivos(),
+            'totalDonos' => $this->obterTotalDonos(),
         ]);
     }
 
     private function obterDadosEstatisticas()
     {
-        // Dados reais do sistema veterinário
-        $totalOrdens = DB::table('ordemservicos')->where('deleted', 0)->count();
-        $ordensUltimos30Dias = DB::table('ordemservicos')
-            ->where('deleted', 0)
+        // Dados reais do sistema veterinário usando Models
+        $totalOrdens = OrdemServico::where('deleted', 0)->count();
+
+        // Ordens últimos 30 dias
+        $ordensUltimos30Dias = OrdemServico::where('deleted', 0)
             ->where('data_hora', '>=', now()->subDays(30))
             ->count();
 
-        $ordensAtivas = DB::table('ordemservicos')
-            ->where('deleted', 0)
-            ->whereIn('status', ['pendente', 'em_andamento'])
-            ->count();
-
-        $ordensProcessando = DB::table('ordemservicos')
-            ->where('deleted', 0)
-            ->where('status', 'em_andamento')
-            ->count();
-
-        // Calcular crescimento dos últimos 30 dias vs 30 dias anteriores
-        $ordens30DiasAnteriores = DB::table('ordemservicos')
-            ->where('deleted', 0)
+        // Ordens 30 dias anteriores (para calcular crescimento)
+        $ordens30DiasAnteriores = OrdemServico::where('deleted', 0)
             ->where('data_hora', '>=', now()->subDays(60))
             ->where('data_hora', '<', now()->subDays(30))
             ->count();
 
+        // Crescimento últimos 30 dias
         $crescimento30Dias = $ordens30DiasAnteriores > 0 ? round((($ordensUltimos30Dias - $ordens30DiasAnteriores) / $ordens30DiasAnteriores) * 100, 1) : 0;
+
+        // Total de ordens comparado com período anterior (últimos 30 dias vs 30 dias anteriores)
+        $crescimentoTotal = $ordens30DiasAnteriores > 0 ? round((($ordensUltimos30Dias - $ordens30DiasAnteriores) / $ordens30DiasAnteriores) * 100, 1) : 0;
+
+        // Ordens ativas (pendente + em_andamento)
+        $ordensAtivas = OrdemServico::where('deleted', 0)
+            ->whereIn('status', ['pendente', 'em_andamento'])
+            ->count();
+
+        // Ordens ativas há 30 dias
+        $ordensAtivas30DiasAtras = OrdemServico::where('deleted', 0)
+            ->whereIn('status', ['pendente', 'em_andamento'])
+            ->where('data_hora', '>=', now()->subDays(60))
+            ->where('data_hora', '<', now()->subDays(30))
+            ->count();
+
+        // Crescimento de ordens ativas
+        $crescimentoAtivas = $ordensAtivas30DiasAtras > 0 ? round((($ordensAtivas - $ordensAtivas30DiasAtras) / $ordensAtivas30DiasAtras) * 100, 1) : 0;
 
         return [
             [
                 'title' => 'Total de Ordens',
                 'value' => number_format($totalOrdens, 0, ',', '.'),
-                'change' => '+12.5%',
+                'change' => ($crescimentoTotal >= 0 ? '+' : '') . $crescimentoTotal . '%',
                 'subtitle' => 'todas as ordens',
-                'variant' => 'success'
+                'variant' => $crescimentoTotal >= 0 ? 'success' : 'warning',
             ],
             [
                 'title' => 'Ordens (30 dias)',
                 'value' => $ordensUltimos30Dias,
                 'change' => ($crescimento30Dias >= 0 ? '+' : '') . $crescimento30Dias . '%',
                 'subtitle' => 'últimos 30 dias',
-                'variant' => $crescimento30Dias >= 0 ? 'success' : 'warning'
+                'variant' => $crescimento30Dias >= 0 ? 'success' : 'warning',
             ],
             [
                 'title' => 'Ordens Ativas',
                 'value' => $ordensAtivas,
-                'change' => '+5.2%',
+                'change' => ($crescimentoAtivas >= 0 ? '+' : '') . $crescimentoAtivas . '%',
                 'subtitle' => 'pendentes + em andamento',
-                'variant' => 'success'
+                'variant' => $crescimentoAtivas >= 0 ? 'success' : 'warning',
             ],
-            [
-                'title' => 'Processando',
-                'value' => $ordensProcessando,
-                'change' => $ordensProcessando > 5 ? '+2.1%' : '-1.3%',
-                'subtitle' => 'em andamento',
-                'variant' => $ordensProcessando > 5 ? 'success' : 'warning'
-            ]
         ];
     }
 
     private function obterGraficoReceita()
     {
-        // Receita real dos últimos 7 meses baseada nas ordens concluídas
+        // Receita real dos últimos 7 meses baseada no valor_total das ordens
         $meses = [];
         for ($i = 6; $i >= 0; $i--) {
             $dataInicio = now()->subMonths($i)->startOfMonth();
             $dataFim = now()->subMonths($i)->endOfMonth();
 
-            $receita = DB::table('ordemservicos')
-                ->where('deleted', 0)
-                ->where('status', 'concluido')
-                ->whereBetween('data_hora', [$dataInicio, $dataFim])
+            // Soma direta do valor_total das ordens de serviço
+            $receita = OrdemServico::where('deleted', 0)
+                ->whereBetween('created_at', [$dataInicio, $dataFim])
                 ->sum('valor_total');
 
             $meses[] = [
-                'label' => $dataInicio->format('M'),
-                'value' => (float) $receita
+                'label' => $dataInicio->format('M/y'),
+                'value' => (float) $receita,
             ];
         }
 
@@ -114,48 +115,43 @@ class DashboardController extends Controller
 
     private function obterGraficoUsuarios()
     {
-        // Novos donos cadastrados por dia da semana (últimas 2 semanas)
-        $diasSemana = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab'];
-        $dados = [];
-
+        // Número de atendimentos (ordens de serviço) por mês nos últimos 7 meses
+        $meses = [];
         for ($i = 6; $i >= 0; $i--) {
-            $data = now()->subDays($i);
-            $novosDonosHoje = DB::table('donos')
-                ->where('deleted', 0)
-                ->whereDate('created_at', $data)
+            $dataInicio = now()->subMonths($i)->startOfMonth();
+            $dataFim = now()->subMonths($i)->endOfMonth();
+
+            $atendimentos = OrdemServico::where('deleted', 0)
+                ->whereBetween('created_at', [$dataInicio, $dataFim])
                 ->count();
 
-            $dados[] = [
-                'label' => $diasSemana[$data->dayOfWeek],
-                'value' => $novosDonosHoje
+            $meses[] = [
+                'label' => $dataInicio->format('M/y'),
+                'value' => $atendimentos,
             ];
         }
 
-        return $dados;
+        return $meses;
     }
 
     private function obterGraficoCategorias()
     {
-        // Distribuição real por espécies de pets
-        $especies = DB::table('pets')
-            ->where('deleted', 0)
-            ->select('especie', DB::raw('count(*) as total'))
+        // Distribuição real por espécies de pets usando Model
+        $especies = Pet::where('deleted', 0)
+            ->select('especie')
+            ->selectRaw('count(*) as total')
             ->groupBy('especie')
             ->get()
             ->map(function ($item) {
                 return [
                     'label' => ucfirst($item->especie),
-                    'value' => $item->total
+                    'value' => $item->total,
                 ];
             });
 
         // Se não houver dados, retornar dados de exemplo
         if ($especies->isEmpty()) {
-            return [
-                ['label' => 'Cães', 'value' => 45],
-                ['label' => 'Gatos', 'value' => 30],
-                ['label' => 'Exóticos', 'value' => 8]
-            ];
+            return [['label' => 'Cães', 'value' => 45], ['label' => 'Gatos', 'value' => 30], ['label' => 'Exóticos', 'value' => 8]];
         }
 
         return $especies->toArray();
@@ -163,149 +159,87 @@ class DashboardController extends Controller
 
     private function obterTabelaPerformers()
     {
-        $ordensComDetalhes = DB::table('ordemservicos')
-            ->leftJoin('pets', 'ordemservicos.id_pet', '=', 'pets.id')
-            ->where('ordemservicos.deleted', 0)
-            ->select('ordemservicos.*', 'pets.nome as pet_nome')
-            ->orderBy('ordemservicos.id', 'desc')
+        $ordensComDetalhes = OrdemServico::where('deleted', 0)
+            ->with('pet:id,nome')
+            ->orderBy('id', 'desc')
             ->take(10)
             ->get()
             ->map(function ($ordem) {
                 return [
                     'avatar' => true,
-                    'numero' => $ordem->codigo,
-                    'pet' => $ordem->pet_nome ?: 'Pet não encontrado',
+                    'numero' => $ordem->numero,
+                    'pet' => $ordem->pet?->nome ?: 'Pet não encontrado',
                     'valor' => $ordem->valor_total,
-                    'status' => ucfirst($ordem->status),
-                    'data' => date('d/m/Y', strtotime($ordem->data_hora)),
-                    'id' => $ordem->id
+                    'data' => $ordem->created_at->format('d/m/Y'),
+                    'id' => $ordem->id,
                 ];
             });
 
-        return [
-            'columns' => [
-                [
-                    'key' => 'pet',
-                    'label' => 'Pet Atendido'
-                ],
-                [
-                    'key' => 'valor',
-                    'label' => 'Valor'
-                ],
-                [
-                    'key' => 'status',
-                    'label' => 'Status'
-                ],
-                [
-                    'key' => 'data',
-                    'label' => 'Data'
-                ]
+
+
+        // Estrutura sempre consistente das colunas - teste com larguras diferentes
+        $columns = [
+            [
+                'key' => 'pet',
+                'label' => 'Pet',
+                'width' => 'xs',  // Mudado para md para evitar conflito
+                'align' => 'left',
+                'priority' => 1,
             ],
-            'data' => $ordensComDetalhes->toArray()
+            [
+                'key' => 'valor',
+                'label' => 'Valor',
+                'width' => '100px',  // Largura customizada específica
+                'align' => 'right',
+                'priority' => 2,
+            ],
+            [
+                'key' => 'data',
+                'label' => 'Data',
+                'width' => 'sm',
+                'align' => 'center',
+                'priority' => 4,
+            ],
+        ];
+
+        return [
+            'columns' => $columns,
+            'data' => $ordensComDetalhes->toArray(),
         ];
     }
 
     private function obterTabelaPedidos()
     {
-        // Ordens recentes com dados reais
-        $ordensRecentes = DB::table('ordemservicos')
-            ->leftJoin('pets', 'ordemservicos.id_pet', '=', 'pets.id')
-            ->where('ordemservicos.deleted', 0)
-            ->select('ordemservicos.*', 'pets.nome as pet_nome', 'pets.especie as pet_especie')
-            ->orderBy('ordemservicos.created_at', 'desc')
+        // Ordens recentes com dados reais usando Models
+        $ordensRecentes = OrdemServico::where('deleted', 0)
+            ->with(['pet:id,nome,especie'])
+            ->orderBy('created_at', 'desc')
             ->take(5)
             ->get()
             ->map(function ($ordem) {
                 return [
-                    'numero' => $ordem->codigo,
-                    'pet' => $ordem->pet_nome ? $ordem->pet_nome . ' (' . ucfirst($ordem->pet_especie) . ')' : 'Pet não encontrado',
-                    'servico' => 'Serviços Múltiplos', // Pode ser expandido para buscar serviços relacionados
-                    'status' => $ordem->status,
+                    'numero' => $ordem->numero,
+                    'pet' => $ordem->pet ? $ordem->pet->nome . ' (' . ucfirst($ordem->pet->especie) . ')' : 'Pet não encontrado',
                     'total' => $ordem->valor_total,
-                    'data' => date('d/m/Y', strtotime($ordem->data_hora)),
-                    'id' => $ordem->id
+                    'data' => $ordem->created_at->format('d/m/Y H:i'),
+                    'id' => $ordem->id,
                 ];
             });
 
+        // Estrutura sempre consistente das colunas - evitando conflitos de largura
+        $columns = [
+            ['key' => 'numero', 'label' => '#', 'width' => '60px', 'align' => 'center', 'priority' => 1],
+            ['key' => 'pet', 'label' => 'Pet', 'width' => 'lg', 'align' => 'left', 'priority' => 1, 'truncate' => true],
+            ['key' => 'total', 'label' => 'Valor', 'width' => '90px', 'align' => 'right', 'priority' => 2]
+        ];
+
         return [
-            'columns' => [
-                ['key' => 'numero', 'label' => 'Ordem'],
-                ['key' => 'pet', 'label' => 'Pet'],
-                ['key' => 'servico', 'label' => 'Serviço'],
-                ['key' => 'status', 'label' => 'Status'],
-                ['key' => 'total', 'label' => 'Total']
-            ],
-            'data' => $ordensRecentes->toArray()
+            'columns' => $columns,
+            'data' => $ordensRecentes->toArray(),
         ];
     }
 
-    private function obterTabelaServicos()
-    {
-        // Serviços populares com dados reais
-        $servicosPopulares = DB::table('servicos')
-            ->leftJoin('ordemservicoservicos', 'servicos.id', '=', 'ordemservicoservicos.id_servico')
-            ->leftJoin('ordemservicos', 'ordemservicoservicos.id_ordemservico', '=', 'ordemservicos.id')
-            ->where('servicos.deleted', 0)
-            ->select('servicos.*', DB::raw('COUNT(ordemservicos.id) as total_agendamentos'))
-            ->groupBy('servicos.id', 'servicos.nome', 'servicos.descricao', 'servicos.preco', 'servicos.duracao_minutos', 'servicos.ativo', 'servicos.deleted', 'servicos.created_at', 'servicos.updated_at')
-            ->orderBy('total_agendamentos', 'desc')
-            ->take(5)
-            ->get()
-            ->map(function ($servico) {
-                return [
-                    'nome' => $servico->nome,
-                    'categoria' => 'Geral', // Default since categoria doesn't exist in table
-                    'preco' => $servico->preco ?? 0,
-                    'status' => 'ativo',
-                    'agendamentos' => $servico->total_agendamentos
-                ];
-            });
 
-        // Se não houver serviços, retornar dados de exemplo
-        if ($servicosPopulares->isEmpty()) {
-            $servicosPopulares = collect([
-                [
-                    'nome' => 'Consulta Veterinária',
-                    'categoria' => 'Consulta',
-                    'preco' => 80.00,
-                    'status' => 'ativo',
-                    'agendamentos' => 156
-                ],
-                [
-                    'nome' => 'Vacinação Múltipla',
-                    'categoria' => 'Preventivo',
-                    'preco' => 120.00,
-                    'status' => 'ativo',
-                    'agendamentos' => 89
-                ],
-                [
-                    'nome' => 'Cirurgia Castração',
-                    'categoria' => 'Cirurgia',
-                    'preco' => 350.00,
-                    'status' => 'ativo',
-                    'agendamentos' => 23
-                ],
-                [
-                    'nome' => 'Banho e Tosa',
-                    'categoria' => 'Estética',
-                    'preco' => 50.00,
-                    'status' => 'ativo',
-                    'agendamentos' => 67
-                ]
-            ]);
-        }
-
-        return [
-            'columns' => [
-                ['key' => 'nome', 'label' => 'Serviço'],
-                ['key' => 'categoria', 'label' => 'Categoria'],
-                ['key' => 'preco', 'label' => 'Preço'],
-                ['key' => 'agendamentos', 'label' => 'Agendamentos'],
-                ['key' => 'status', 'label' => 'Status']
-            ],
-            'data' => $servicosPopulares->toArray()
-        ];
-    }
 
     private function receitaTotal()
     {
@@ -321,18 +255,20 @@ class DashboardController extends Controller
 
     private function valorMedioPedido()
     {
-        // Valor médio real das ordens concluídas
-        $valorMedio = DB::table('ordemservicos')
-            ->where('deleted', 0)
-            ->where('status', 'concluido')
-            ->avg('valor_total');
+        // Valor médio real das ordens usando Model
+        $valorMedio = OrdemServico::where('deleted', 0)->avg('valor_total');
 
         return (float) $valorMedio ?: 0;
     }
 
     private function servicosAtivos()
     {
-        // Número real de serviços ativos
-        return DB::table('servicos')->where('deleted', 0)->count();
+        // Número real de serviços ativos usando Model
+        return Servico::where('deleted', 0)->count();
+    }
+
+    private function obterTotalDonos()
+    {
+        return Dono::where('deleted', 0)->count();
     }
 }
