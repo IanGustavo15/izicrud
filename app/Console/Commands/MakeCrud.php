@@ -32,6 +32,7 @@ class MakeCrud extends Command
         $componentized = $this->option('c');
 
         $this->createModel($model, $fields);
+        $this->createPivotModels($model, $fields);  // Criar modelos pivot necessários
         $this->createController($controller, $model, $viewFolder, $routePrefix, $modelLower, $modelTitle, $modelPluralTitle, $fields);
         $this->createViews($viewFolder, $routePrefix, $model, $modelLower, $modelTitle, $modelPluralTitle, $modelPluralLower, $fields, $componentized);
         $this->appendControllerImport($controller);
@@ -105,6 +106,101 @@ class MakeCrud extends Command
         return null;
     }
 
+    protected function createPivotModels($model, $fields)
+    {
+        $pivotFields = array_filter($fields, fn($f) => $f['is_pivot']);
+
+        foreach ($pivotFields as $field) {
+            $pivotModelName = $this->generatePivotModelName($field['name']);
+            $pivotTableName = $this->generatePivotTableName($model, $field['related_model']);
+
+            // Verificar se o modelo pivot já existe
+            $pivotModelPath = app_path("Models/{$pivotModelName}.php");
+            if (!File::exists($pivotModelPath)) {
+                $this->createPivotModel($pivotModelName, $pivotTableName, $model, $field['related_model']);
+                $this->createPivotMigration($pivotModelName, $pivotTableName, $model, $field['related_model']);
+                $this->info("✅ Modelo pivot criado: {$pivotModelName}");
+            } else {
+                $this->comment("⚠️  Modelo pivot {$pivotModelName} já existe, pulando...");
+            }
+        }
+    }
+
+    protected function createPivotModel($pivotModelName, $pivotTableName, $model, $relatedModel)
+    {
+        $modelLower = strtolower($model);
+        $relatedModelLower = strtolower($relatedModel);
+
+        $pivotModelContent = <<<EOT
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+
+class {$pivotModelName} extends Model
+{
+    protected \$table = '{$pivotTableName}';
+    protected \$fillable = ['id_{$modelLower}', 'id_{$relatedModelLower}', 'deleted'];
+    protected \$displayLabels = ['{$model}', '{$relatedModel}'];
+
+    // Tabela pivot para relacionamento {$model} <-> {$relatedModel}
+    // Este modelo foi gerado automaticamente
+
+    public function {$modelLower}()
+    {
+        return \$this->belongsTo(\App\Models\\{$model}::class, 'id_{$modelLower}');
+    }
+
+    public function {$relatedModelLower}()
+    {
+        return \$this->belongsTo(\App\Models\\{$relatedModel}::class, 'id_{$relatedModelLower}');
+    }
+}
+EOT;
+
+        File::put(app_path("Models/{$pivotModelName}.php"), $pivotModelContent);
+    }
+
+    protected function createPivotMigration($pivotModelName, $pivotTableName, $model, $relatedModel)
+    {
+        $modelLower = strtolower($model);
+        $relatedModelLower = strtolower($relatedModel);
+        $timestamp = now()->format('Y_m_d_His');
+        $migrationName = "create_{$pivotTableName}_table";
+
+        $migrationContent = <<<EOT
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    public function up()
+    {
+        Schema::create('{$pivotTableName}', function (Blueprint \$table) {
+            \$table->id();
+            \$table->foreignId('id_{$modelLower}')->nullable()->constrained('{$this->generateTableName($model)}');
+            \$table->foreignId('id_{$relatedModelLower}')->nullable()->constrained('{$this->generateTableName($relatedModel)}');
+            \$table->tinyInteger('deleted')->default(0);
+            \$table->timestamps();
+        });
+    }
+
+    public function down()
+    {
+        Schema::dropIfExists('{$pivotTableName}');
+    }
+};
+EOT;
+
+        $migrationFileName = "{$timestamp}_{$migrationName}.php";
+        File::put(database_path("migrations/{$migrationFileName}"), $migrationContent);
+        $this->comment("📄 Migração pivot criada: {$migrationFileName}");
+    }
+
     protected function createModel($model, $fields)
     {
         $fillable = implode(', ', array_map(fn($f) => "'{$f['name']}'", array_filter($fields, fn($f) => !$f['is_pivot'])));
@@ -118,10 +214,10 @@ class MakeCrud extends Command
 
         $relationships = $this->generateRelationships($fields, $model);
 
-        $tableName = $this->generateTableName($model);
+        $tableNameCode = "protected \$table = '" . $this->generateTableName($model) . "';";
 
         $stub = File::get(base_path('stubs/crud.model.stub'));
-        $stub = str_replace(['{{model}}', '{{tableName}}', '{{fillable}}', '{{displayLabels}}', '{{casts}}', '{{relationships}}'], [$model, $tableName, $fillable, $displayLabels, $casts, $relationships], $stub);
+        $stub = str_replace(['{{model}}', '{{tableName}}', '{{fillable}}', '{{displayLabels}}', '{{casts}}', '{{relationships}}'], [$model, $tableNameCode, $fillable, $displayLabels, $casts, $relationships], $stub);
         File::put(app_path("Models/{$model}.php"), $stub);
     }
 
@@ -405,15 +501,17 @@ EOT;
             $f['type'] === 'boolean' => 'props.item?.' . $f['name'] . ' || false',
             $f['type'] === 'integer' || $f['type'] === 'bigInteger' || $f['type'] === 'float' || $f['type'] === 'double' || $f['type'] === 'decimal' => 'props.item?.' . $f['name'] . ' || 0',
             $f['type'] === 'pivot' => 'props.item?.' . $f['name'] . ' || []',
-            $f['type'] === 'file' || $f['type'] === 'files' => 'null as File | null',
+            $f['type'] === 'file' => 'null as File | null',
+            $f['type'] === 'files' => 'null as File[] | null',
             default => "props.item?.{$f['name']}?.toString() || ''",
         } . ");", $fields));
 
         // Gerar FormData append
         $formDataAppend = implode("\n\n    ", array_map(fn($f) => match (true) {
             $f['type'] === 'file' => "// Arquivo\n    if ({$f['name']}Ref.value) {\n        formData.append('{$f['name']}', {$f['name']}Ref.value);\n    }",
-            $f['type'] === 'files' => "// Arquivos múltiplos\n    if ({$f['name']}Ref.value) {\n        {$f['name']}Ref.value.forEach((file, index) => {\n            formData.append(`{$f['name']}[]`, file);\n        });\n    }",
+            $f['type'] === 'files' => "// Arquivos múltiplos\n    if ({$f['name']}Ref.value) {\n        {$f['name']}Ref.value.forEach((file: File, index: number) => {\n            formData.append(`{$f['name']}[]`, file);\n        });\n    }",
             $f['type'] === 'pivot' => "// Pivot data will be handled separately",
+            $f['type'] === 'integer' || $f['type'] === 'bigInteger' || $f['type'] === 'float' || $f['type'] === 'double' || $f['type'] === 'decimal' => "formData.append('{$f['name']}', {$f['name']}Ref.value.toString());",
             default => "formData.append('{$f['name']}', {$f['name']}Ref.value);",
         }, $fields));
 
@@ -841,8 +939,7 @@ VUE;
     private function generateTableName(string $model): string
     {
         // Usa a mesma lógica das migrações: strtolower + s
-        $tableName = strtolower($model) . 's';
-        return "protected \$table = '{$tableName}';";
+        return strtolower($model) . 's';
     }
 
     /**
@@ -1479,13 +1576,15 @@ VUE;
         $propName = "{$field['name']}Options";
         $label = $field['label'];
         $fieldName = $field['name'];
+        $relatedModel = $field['related_model'];
 
         return <<<VUE
 <div>
             <RelationshipManyField
                 v-model="{$fieldName}Ref"
-                :options="props.{$propName} || []"
+                :available-items="props.{$propName} || []"
                 label="{$label}"
+                related-model="{$relatedModel}"
                 placeholder="Selecione {$label}"
             />
         </div>
