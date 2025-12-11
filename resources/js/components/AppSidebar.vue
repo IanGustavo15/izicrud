@@ -14,7 +14,7 @@ import {
 import { dashboard } from '@/routes';
 // import { type NavItem } from '@/types';
 import { Link } from '@inertiajs/vue3';
-import { BookOpen, Folder, LayoutGrid, Car, UserRound, Cog, LayoutDashboard, Github, Waypoints, ScrollText, Wrench } from 'lucide-vue-next';
+import { BookOpen, Folder, LayoutGrid, Car, UserRound, Cog, LayoutDashboard, Github, Waypoints, ScrollText, Wrench, HardHat } from 'lucide-vue-next';
 import AppLogo from './AppLogo.vue';
 
 export type NavItem = {
@@ -33,6 +33,13 @@ const mainNavItems: NavItem[] = [
         nivel: 99,
     },
 
+
+{
+    title: 'Trabalhadores',
+    href: '/trabalhador',
+    icon: HardHat,
+    nivel: 1,
+},
 
 {
     title: 'Clientes',

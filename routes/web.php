@@ -6,6 +6,7 @@ use Laravel\Fortify\Features;
 use App\Http\Controllers\PermissoesController;
 
 // Controllers
+use App\Http\Controllers\TrabalhadorController;
 use App\Http\Controllers\ServicoOrdemDeServicoController;
 use App\Http\Controllers\OrdemDeServicoController;
 use App\Http\Controllers\PecaServicoController;
@@ -45,6 +46,18 @@ Route::group([
 
 
 // Rotas
+Route::group([
+    'middleware' => ['auth', 'verified', 'permissao:99'],
+], function () {
+    Route::controller(TrabalhadorController::class)->group(function () {
+        Route::get('/trabalhador', 'index')->name('trabalhador.index');
+        Route::get('/trabalhador/create', 'create')->name('trabalhador.create');
+        Route::post('/trabalhador', 'store')->name('trabalhador.store');
+        Route::get('/trabalhador/{trabalhador}/edit', 'edit')->name('trabalhador.edit');
+        Route::put('/trabalhador/{trabalhador}', 'update')->name('trabalhador.update');
+        Route::delete('/trabalhador/{trabalhador}', 'destroy')->name('trabalhador.destroy');
+    });
+});
 Route::group([
     'middleware' => ['auth', 'verified', 'permissao:0'],
 ], function () {
