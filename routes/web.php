@@ -6,6 +6,7 @@ use Laravel\Fortify\Features;
 use App\Http\Controllers\PermissoesController;
 
 // Controllers
+use App\Http\Controllers\EspecialidadeController;
 use App\Http\Controllers\TrabalhadorController;
 use App\Http\Controllers\ServicoOrdemDeServicoController;
 use App\Http\Controllers\OrdemDeServicoController;
@@ -46,6 +47,18 @@ Route::group([
 
 
 // Rotas
+Route::group([
+    'middleware' => ['auth', 'verified', 'permissao:99'],
+], function () {
+    Route::controller(EspecialidadeController::class)->group(function () {
+        Route::get('/especialidade', 'index')->name('especialidade.index');
+        Route::get('/especialidade/create', 'create')->name('especialidade.create');
+        Route::post('/especialidade', 'store')->name('especialidade.store');
+        Route::get('/especialidade/{especialidade}/edit', 'edit')->name('especialidade.edit');
+        Route::put('/especialidade/{especialidade}', 'update')->name('especialidade.update');
+        Route::delete('/especialidade/{especialidade}', 'destroy')->name('especialidade.destroy');
+    });
+});
 Route::group([
     'middleware' => ['auth', 'verified', 'permissao:99'],
 ], function () {

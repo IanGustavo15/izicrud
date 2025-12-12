@@ -8,13 +8,9 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('trabalhadors', function (Blueprint $table) {
+        Schema::create('especialidades', function (Blueprint $table) {
             $table->id();
-            $table->string('nome');
-            $table->integer('id_especialidade');
-            $table->float('valorHora', 2);
-            $table->integer('status', false, true);
-            $table->float('qualidade', 2);
+            $table->string('especialidade');
             $table->boolean('deleted')->default(false);
             $table->timestamps();
         });
@@ -22,6 +18,6 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::dropIfExists('trabalhadors');
+        Schema::dropIfExists('especialidades');
     }
 };
