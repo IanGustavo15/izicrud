@@ -1,0 +1,5 @@
+php artisan make:controller ApiController
+
+php artisan make:crud Champion key:"Key":integer api_id:"ID Api":string name:"Name":string title:"Title":string // não utilizado
+
+

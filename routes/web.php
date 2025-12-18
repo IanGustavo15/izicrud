@@ -1,11 +1,14 @@
 <?php
 
+use App\Http\Controllers\ApiController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Laravel\Fortify\Features;
 use App\Http\Controllers\PermissoesController;
+use Illuminate\Support\Facades\Http;
 
 // Controllers
+use App\Http\Controllers\ChampionController;
 
 
 
@@ -15,7 +18,13 @@ Route::get('/', function () {
     ]);
 })->name('home');
 
-Route::get('dashboard', [App\Http\Controllers\DashboardController::class, 'index'])->middleware(['auth', 'verified'])->name('dashboard');
+Route::get('dashboard', function(){
+    return Inertia::render('Dashboard');
+})->middleware(['auth', 'verified'])->name('dashboard');
+
+Route::get('teste/{gameName}/{tagName}', [ApiController::class, 'getMaestria'])->middleware(['auth', 'verified'])->name('teste');
+Route::get('teste/{key}', [ApiController::class, 'getChampionName'])->name('testee');
+
 
 Route::get('/sempermissao', function () {
     return Inertia::render('SemPermissao');
@@ -39,6 +48,7 @@ Route::group([
 
 
 // Rotas
+
 
 
 require __DIR__.'/settings.php';

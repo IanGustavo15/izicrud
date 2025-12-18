@@ -27,7 +27,7 @@ import DashTable from '@/components/dashboard/DashTable.vue';
  * - Páginas de criação/edição
  * - Formulários inline
  */
-import DonoForm from '@/pages/Dono/components/DonoForm.vue';
+// import DonoForm from '@/pages/Dono/components/DonoForm.vue';
 
 // Componentes para modais e alertas
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
