@@ -41,13 +41,6 @@ const mainNavItems: NavItem[] = [
     },
 
 
-{
-    title: 'Clientes',
-    href: '/cliente',
-    icon: LayoutGrid,
-    nivel: 0,
-},
-
 // Novos Itens do Menu
 
 

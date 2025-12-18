@@ -1,1 +1,0 @@
-php artisan make:crud Cliente nome:"Nome":string email:"E-mail":email cpf:"CPF":string telefone:"Telefone":string foto:"Foto":file --c
