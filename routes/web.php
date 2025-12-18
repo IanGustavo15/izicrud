@@ -6,6 +6,7 @@ use Laravel\Fortify\Features;
 use App\Http\Controllers\PermissoesController;
 
 // Controllers
+use App\Http\Controllers\ClienteController;
 
 
 
@@ -39,6 +40,19 @@ Route::group([
 
 
 // Rotas
+Route::group([
+    'middleware' => ['auth', 'verified', 'permissao:99'],
+], function () {
+    Route::controller(ClienteController::class)->group(function () {
+        Route::get('/cliente', 'index')->name('cliente.index');
+        Route::get('/cliente/create', 'create')->name('cliente.create');
+        Route::post('/cliente', 'store')->name('cliente.store');
+        Route::get('/cliente/{cliente}/edit', 'edit')->name('cliente.edit');
+        Route::put('/cliente/{cliente}', 'update')->name('cliente.update');
+        Route::delete('/cliente/{cliente}', 'destroy')->name('cliente.destroy');
+    });
+});
+
 
 
 require __DIR__.'/settings.php';
