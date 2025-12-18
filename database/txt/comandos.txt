@@ -1,1 +1,2 @@
 php artisan make:crud Cliente nome:"Nome":string email:"E-mail":email cpf:"CPF":string telefone:"Telefone":string foto:"Foto":file --c
+php artisan make:crud Veículo id_cliente:"Cliente":integer placa:"Placa":string modelo:"Modelo":string ano:"Ano":integer id_tipo:"Tipo":integer
