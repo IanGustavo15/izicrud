@@ -39,26 +39,57 @@ class ApiController extends Controller
         $retornoAPI = Http::withHeaders([
         'X-Riot-Token' => env('API_KEY')
         ])->get($url)->json();
+        if (!isset($retornoAPI['puuid'])) {
+        return null;
+    }
         return $retornoAPI['puuid'];
     }
 
-    public function championsList(){
-        $url = "https://ddragon.leagueoflegends.com/cdn/15.24.1/data/en_US/champion.json";
-        $retornoAPI = Http::get($url)->json()['data'];
-
+    public function getHistorico($gameName, $tagLine){
+        $puuid = $this->_getPuuid($gameName, $tagLine);
+        $url = "https://americas.api.riotgames.com/lol/match/v5/matches/by-puuid/{$puuid}/ids?start=0&count=20&";
+        $retornoAPI = Http::withHeaders([
+        'X-Riot-Token' => env('API_KEY')
+        ])->get($url)->json();
         // dd($retornoAPI);
-
-        foreach ($retornoAPI as $champ) {
-            Champion::updateOrCreate(
-    ['key' => $champ['key']],
-        [
-                    'api_id' => $champ['id'],
-                    'name'   => $champ['name'],
-                    'title'  => $champ['title']
-                ]
-            );
-        }
+        return $retornoAPI;
     }
+
+    public function getPartida($matchId){
+        $url = "https://americas.api.riotgames.com/lol/match/v5/matches/{$matchId}";
+        $retornoAPI = Http::withHeaders([
+        'X-Riot-Token' => env('API_KEY')
+        ])->get($url)->json();
+        return $retornoAPI;
+    }
+
+    public function getUltimaPartida($gameName, $tagLine){
+        $partidas = $this->getHistorico($gameName, $tagLine);
+
+        $firstMatchId = $partidas[0];
+        $detalhesPartida = $this->getPartida($firstMatchId);
+
+        return $detalhesPartida;
+    }
+
+    // public function championsList(){
+    //     $url = "https://ddragon.leagueoflegends.com/cdn/15.24.1/data/en_US/champion.json";
+    //     $retornoAPI = Http::get($url)->json()['data'];
+
+    //     // dd($retornoAPI);
+
+    //     foreach ($retornoAPI as $champ) {
+    //         Champion::updateOrCreate(
+    // ['key' => $champ['key']],
+    //     [
+    //                 'api_id' => $champ['id'],
+    //                 'name'   => $champ['name'],
+    //                 'title'  => $champ['title']
+    //             ]
+    //         );
+    //     }
+    // }
+
     public function getChampionName($key){
         $caminho = storage_path('app/data/champions.json');
         if (file_exists($caminho)) {
