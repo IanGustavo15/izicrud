@@ -47,7 +47,7 @@ class ApiController extends Controller
 
     public function getHistorico($gameName, $tagLine){
         $puuid = $this->_getPuuid($gameName, $tagLine);
-        $url = "https://americas.api.riotgames.com/lol/match/v5/matches/by-puuid/{$puuid}/ids?start=0&count=20&";
+        $url = "https://americas.api.riotgames.com/lol/match/v5/matches/by-puuid/{$puuid}/ids?start=0&count=10&";
         $retornoAPI = Http::withHeaders([
         'X-Riot-Token' => env('API_KEY')
         ])->get($url)->json();
@@ -70,6 +70,30 @@ class ApiController extends Controller
         $detalhesPartida = $this->getPartida($firstMatchId);
 
         return $detalhesPartida;
+    }
+
+    public function getDezPartidas($gameName, $tagLine){
+        $partidas = $this->getHistorico($gameName, $tagLine);
+        $dezPartidas = [];
+        for($i = 0; $i < 2; $i++) {
+        if(isset($partidas[$i])){
+            $matchId = $partidas[$i];
+            $dezPartidas[] = $this->getPartida($matchId);
+        }
+    }
+        return $dezPartidas;
+    }
+
+    public function getUltimoKDA($gameName, $tagLine){
+        $puuid = $this->_getPuuid($gameName, $tagLine);
+        $partidas = $this->getHistorico($gameName, $tagLine);
+        $firstMatchId = $partidas[0];
+        $detalhesPartida = $this->getPartida($firstMatchId);
+        $participants = $detalhesPartida['info']['participants'];
+        // dd($detalhesPartida);
+        // dd($participants);
+        $pessoaPorPuuid = array_column($participants,'null', 'puuid');
+        dd($pessoaPorPuuid);
     }
 
     // public function championsList(){

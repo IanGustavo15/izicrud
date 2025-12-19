@@ -24,8 +24,10 @@ Route::get('dashboard', function(){
 
 // Route::get('teste/{gameName}/{tagName}', [ApiController::class, 'getMaestria'])->middleware(['auth', 'verified'])->name('teste');
 Route::get('teste/{key}', [ApiController::class, 'getChampionName'])->name('testee');
-Route::get('teste/{gameName}/{tagName}', [ApiController::class, 'getHistorico'])->middleware(['auth', 'verified'])->name('testeee');
+// Route::get('teste/{gameName}/{tagName}', [ApiController::class, 'getHistorico'])->middleware(['auth', 'verified'])->name('testeee');
 Route::get('partida/{gameName}/{tagName}', [ApiController::class, 'getUltimaPartida'])->middleware(['auth', 'verified'])->name('partida');
+Route::get('dezpartidas/{gameName}/{tagName}', [ApiController::class, 'getDezPartidas'])->middleware(['auth', 'verified'])->name('dezpartidas');
+Route::get('kda/{gameName}/{tagName}', [ApiController::class, 'getUltimoKDA'])->middleware(['auth', 'verified'])->name('dezpartidas');
 
 
 Route::get('/sempermissao', function () {
