@@ -8,5 +8,5 @@ class Mastery extends Model
 {
     protected $fillable = ['player', 'points', 'champion'];
 
-    protected $casts = 'masteries';
+    protected $table = 'masteries';
 }

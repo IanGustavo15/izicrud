@@ -45,12 +45,11 @@ class ApiController extends Controller
             // dd($retornoAPI[$key]);
             // dd($retornoAPI[$key]['championPoints'], $retornoAPI[$key]['championNome']);
             Mastery::updateOrCreate(
-                ['player' => $puuid],
                 [
+                    'player' => $puuid,
                     'points' => $retornoAPI[$key]['championPoints'],
                     'champion' => $retornoAPI[$key]['championNome']
-                    ]
-                );
+                ]);
         }
         // dd($retornoAPI);
         return $retornoAPI;
@@ -123,7 +122,7 @@ class ApiController extends Controller
         // dd($participants);
         $pessoasPorPuuid = array_column($participants, null, 'puuid');
         $selecionado = $pessoasPorPuuid["$puuid"];
-        dd($pessoasPorPuuid);
+        // dd($pessoasPorPuuid);
         // dd($selecionado);
         return [
             'Campeão' => $selecionado['championName'],

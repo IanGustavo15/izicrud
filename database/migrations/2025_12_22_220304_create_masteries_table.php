@@ -15,7 +15,7 @@ return new class extends Migration
     {
         Schema::create('masteries', function (Blueprint $table) {
             $table->id();
-            $table->integer('player');
+            $table->string('player');
             $table->integer('points');
             $table->string('champion');
             $table->timestamps();
