@@ -6,6 +6,7 @@ use App\Models\Champion;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Cache;
 
 
 class ApiController extends Controller
@@ -35,32 +36,34 @@ class ApiController extends Controller
     }
 
     public function _getPuuid($gameName, $tagLine){
-        $url = "https://americas.api.riotgames.com/riot/account/v1/accounts/by-riot-id/{$gameName}/{$tagLine}";
-        $retornoAPI = Http::withHeaders([
-        'X-Riot-Token' => env('API_KEY')
-        ])->get($url)->json();
-        if (!isset($retornoAPI['puuid'])) {
-        return null;
-    }
-        return $retornoAPI['puuid'];
+        return Cache::remember("puuid_{$gameName}_{$tagLine}", 60 * 60 * 24 * 30, function () use ($gameName, $tagLine) {
+            $url = "https://americas.api.riotgames.com/riot/account/v1/accounts/by-riot-id/{$gameName}/{$tagLine}";
+            $retornoAPI = Http::withHeaders([
+            'X-Riot-Token' => env('API_KEY')
+            ])->get($url)->json();
+            return $retornoAPI['puuid'];
+        });
     }
 
     public function getHistorico($gameName, $tagLine){
         $puuid = $this->_getPuuid($gameName, $tagLine);
-        $url = "https://americas.api.riotgames.com/lol/match/v5/matches/by-puuid/{$puuid}/ids?start=0&count=10&";
-        $retornoAPI = Http::withHeaders([
-        'X-Riot-Token' => env('API_KEY')
-        ])->get($url)->json();
-        // dd($retornoAPI);
-        return $retornoAPI;
+        return Cache::remember("historico_{$puuid}", 600, function () use ($puuid) {
+            $url = "https://americas.api.riotgames.com/lol/match/v5/matches/by-puuid/{$puuid}/ids?start=0&count=10&";
+            $retornoAPI = Http::withHeaders([
+            'X-Riot-Token' => env('API_KEY')
+            ])->get($url)->json();
+            return $retornoAPI;
+        });
     }
 
     public function getPartida($matchId){
-        $url = "https://americas.api.riotgames.com/lol/match/v5/matches/{$matchId}";
-        $retornoAPI = Http::withHeaders([
-        'X-Riot-Token' => env('API_KEY')
-        ])->get($url)->json();
-        return $retornoAPI;
+        return Cache::remember("partida_{$matchId}", 60 * 60 * 24 * 30, function () use ($matchId) {
+            $url = "https://americas.api.riotgames.com/lol/match/v5/matches/{$matchId}";
+            $retornoAPI = Http::withHeaders([
+            'X-Riot-Token' => env('API_KEY')
+            ])->get($url)->json();
+            return $retornoAPI;
+        });
     }
 
     public function getUltimaPartida($gameName, $tagLine){
