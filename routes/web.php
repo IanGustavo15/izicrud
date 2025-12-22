@@ -22,12 +22,13 @@ Route::get('dashboard', function(){
     return Inertia::render('Dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
 
-// Route::get('teste/{gameName}/{tagName}', [ApiController::class, 'getMaestria'])->middleware(['auth', 'verified'])->name('teste');
-Route::get('teste/{key}', [ApiController::class, 'getChampionName'])->name('testee');
-// Route::get('teste/{gameName}/{tagName}', [ApiController::class, 'getHistorico'])->middleware(['auth', 'verified'])->name('testeee');
-Route::get('partida/{gameName}/{tagName}', [ApiController::class, 'getUltimaPartida'])->middleware(['auth', 'verified'])->name('partida');
+Route::get('maestria/{gameName}/{tagName}', [ApiController::class, 'getMaestria'])->middleware(['auth', 'verified'])->name('maestria');
+Route::get('champion/{key}', [ApiController::class, 'getChampionName'])->name('champion');
+Route::get('historico/{gameName}/{tagName}', [ApiController::class, 'getHistorico'])->middleware(['auth', 'verified'])->name('historico');
+Route::get('ultimapartida/{gameName}/{tagName}', [ApiController::class, 'getUltimaPartida'])->middleware(['auth', 'verified'])->name('ultimapartida');
+Route::get('ultimokda/{gameName}/{tagName}', [ApiController::class, 'getUltimoKDA'])->middleware(['auth', 'verified'])->name('ultimokda');
 Route::get('dezpartidas/{gameName}/{tagName}', [ApiController::class, 'getDezPartidas'])->middleware(['auth', 'verified'])->name('dezpartidas');
-Route::get('kda/{gameName}/{tagName}', [ApiController::class, 'getUltimoKDA'])->middleware(['auth', 'verified'])->name('dezpartidas');
+Route::get('todoskda/{gameName}/{tagName}', [ApiController::class, 'getTodosKDA'])->middleware(['auth', 'verified'])->name('todoskda');
 
 
 Route::get('/sempermissao', function () {

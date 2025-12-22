@@ -71,19 +71,6 @@ class ApiController extends Controller
 
         return $detalhesPartida;
     }
-
-    public function getDezPartidas($gameName, $tagLine){
-        $partidas = $this->getHistorico($gameName, $tagLine);
-        $dezPartidas = [];
-        for($i = 0; $i < 2; $i++) {
-        if(isset($partidas[$i])){
-            $matchId = $partidas[$i];
-            $dezPartidas[] = $this->getPartida($matchId);
-        }
-    }
-        return $dezPartidas;
-    }
-
     public function getUltimoKDA($gameName, $tagLine){
         $puuid = $this->_getPuuid($gameName, $tagLine);
         $partidas = $this->getHistorico($gameName, $tagLine);
@@ -92,8 +79,55 @@ class ApiController extends Controller
         $participants = $detalhesPartida['info']['participants'];
         // dd($detalhesPartida);
         // dd($participants);
-        $pessoaPorPuuid = array_column($participants,'null', 'puuid');
-        dd($pessoaPorPuuid);
+        $pessoasPorPuuid = array_column($participants,null, 'puuid');
+        $selecionado = $pessoasPorPuuid["$puuid"];
+        // dd($pessoasPorPuuid);
+        // dd($selecionado);
+        return [
+            "Campeão" => $selecionado["championName"],
+            "KDA" => $selecionado["challenges"]["kda"],
+            "Abates" => $selecionado["kills"],
+            "Mortes" => $selecionado["deaths"],
+            "Assistências" => $selecionado["assists"],
+            "Dano a campeões" => $selecionado["totalDamageDealtToChampions"]
+        ];
+    }
+
+    public function getDezPartidas($gameName, $tagLine){
+        $partidas = $this->getHistorico($gameName, $tagLine);
+        $dezPartidas = [];
+        for($i = 0; $i < 10; $i++) {
+        if(isset($partidas[$i])){
+            $matchId = $partidas[$i];
+            $dezPartidas[] = $this->getPartida($matchId);
+        }
+    }
+        return $dezPartidas;
+    }
+
+    public function getTodosKDA($gameName, $tagLine){
+        $puuid = $this->_getPuuid($gameName, $tagLine);
+        $detalhesPartidas = $this->getDezPartidas($gameName, $tagLine);
+        // dd($detalhesPartidas);
+        $listaKDA = [];
+        foreach ($detalhesPartidas as $det) {
+            // dd($det);
+            $participants = $det['info']['participants'];
+            $pessoasPorPuuid = array_column($participants,null, 'puuid');
+            $selecionado = $pessoasPorPuuid["$puuid"];
+            $listaKDA[] = [
+                    "Campeão" => $selecionado["championName"],
+                    "KDA" => $selecionado["challenges"]["kda"],
+                    "Abates" => $selecionado["kills"],
+                    "Mortes" => $selecionado["deaths"],
+                    "Assistências" => $selecionado["assists"],
+                    "Dano a campeões" => $selecionado["totalDamageDealtToChampions"]
+            ];
+        };
+        return $listaKDA;
+        // dd($participants);
+        // dd($selecionado);
+        // dd($participants);
     }
 
     // public function championsList(){
