@@ -3,70 +3,108 @@
 namespace App\Http\Controllers;
 
 use App\Models\Champion;
+use App\Models\Mastery;
+use App\Models\Player;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Cache;
 
-
 class ApiController extends Controller
 {
-    public function getPuuid($gameName, $tagLine){
+    public function getPuuid($gameName, $tagLine)
+    {
         // $gameName = 'sTOPsister';
         // $tagLine = 'sob';
         $url = "https://americas.api.riotgames.com/riot/account/v1/accounts/by-riot-id/{$gameName}/{$tagLine}";
         $retornoAPI = Http::withHeaders([
-        'X-Riot-Token' => env('API_KEY')
-        ])->get($url)->json();
+            'X-Riot-Token' => env('API_KEY'),
+        ])
+            ->get($url)
+            ->json();
+            Player::updateOrCreate([
+                'game_name' => $gameName,
+                'tag_line' => $tagLine,
+                'puuid' => $retornoAPI['puuid'],
+                ]);
         // dd($retornoAPI['puuid']);
         return $retornoAPI;
     }
-    public function getMaestria($gameName, $tagLine){
+    public function getMaestria($gameName, $tagLine)
+    {
         $puuid = $this->_getPuuid($gameName, $tagLine);
         $url = "https://br1.api.riotgames.com/lol/champion-mastery/v4/champion-masteries/by-puuid/{$puuid}/top?count=5";
         $retornoAPI = Http::withHeaders([
-        'X-Riot-Token' => env('API_KEY')
-        ])->get($url)->json();
+            'X-Riot-Token' => env('API_KEY'),
+        ])
+            ->get($url)
+            ->json();
         foreach ($retornoAPI as $key => $top) {
             $championNome = $this->getChampionName($top['championId']);
             $retornoAPI[$key]['championNome'] = $championNome;
+            // dd($retornoAPI[$key]);
+            // dd($retornoAPI[$key]['championPoints'], $retornoAPI[$key]['championNome']);
+            Mastery::updateOrCreate(
+                ['player' => $puuid],
+                [
+                    'points' => $retornoAPI[$key]['championPoints'],
+                    'champion' => $retornoAPI[$key]['championNome']
+                    ]
+                );
         }
         // dd($retornoAPI);
         return $retornoAPI;
     }
 
-    public function _getPuuid($gameName, $tagLine){
+    public function _getPuuid($gameName, $tagLine)
+    {
         return Cache::remember("puuid_{$gameName}_{$tagLine}", 60 * 60 * 24 * 30, function () use ($gameName, $tagLine) {
             $url = "https://americas.api.riotgames.com/riot/account/v1/accounts/by-riot-id/{$gameName}/{$tagLine}";
             $retornoAPI = Http::withHeaders([
-            'X-Riot-Token' => env('API_KEY')
-            ])->get($url)->json();
+                'X-Riot-Token' => env('API_KEY'),
+            ])
+                ->get($url)
+                ->json();
+            Player::updateOrCreate([
+                'game_name' => $gameName,
+                'tag_line' => $tagLine,
+                'puuid' => $retornoAPI['puuid'
+            ],
+                ]);
+                // dd($retornoAPI);
             return $retornoAPI['puuid'];
         });
     }
 
-    public function getHistorico($gameName, $tagLine){
+    public function getHistorico($gameName, $tagLine)
+    {
         $puuid = $this->_getPuuid($gameName, $tagLine);
         return Cache::remember("historico_{$puuid}", 600, function () use ($puuid) {
             $url = "https://americas.api.riotgames.com/lol/match/v5/matches/by-puuid/{$puuid}/ids?start=0&count=10&";
             $retornoAPI = Http::withHeaders([
-            'X-Riot-Token' => env('API_KEY')
-            ])->get($url)->json();
+                'X-Riot-Token' => env('API_KEY'),
+            ])
+                ->get($url)
+                ->json();
             return $retornoAPI;
         });
     }
 
-    public function getPartida($matchId){
+    public function getPartida($matchId)
+    {
         return Cache::remember("partida_{$matchId}", 60 * 60 * 24 * 30, function () use ($matchId) {
             $url = "https://americas.api.riotgames.com/lol/match/v5/matches/{$matchId}";
             $retornoAPI = Http::withHeaders([
-            'X-Riot-Token' => env('API_KEY')
-            ])->get($url)->json();
+                'X-Riot-Token' => env('API_KEY'),
+            ])
+                ->get($url)
+                ->json();
             return $retornoAPI;
         });
     }
 
-    public function getUltimaPartida($gameName, $tagLine){
+    public function getUltimaPartida($gameName, $tagLine)
+    {
         $partidas = $this->getHistorico($gameName, $tagLine);
 
         $firstMatchId = $partidas[0];
@@ -74,7 +112,8 @@ class ApiController extends Controller
 
         return $detalhesPartida;
     }
-    public function getUltimoKDA($gameName, $tagLine){
+    public function getUltimoKDA($gameName, $tagLine)
+    {
         $puuid = $this->_getPuuid($gameName, $tagLine);
         $partidas = $this->getHistorico($gameName, $tagLine);
         $firstMatchId = $partidas[0];
@@ -82,33 +121,35 @@ class ApiController extends Controller
         $participants = $detalhesPartida['info']['participants'];
         // dd($detalhesPartida);
         // dd($participants);
-        $pessoasPorPuuid = array_column($participants,null, 'puuid');
+        $pessoasPorPuuid = array_column($participants, null, 'puuid');
         $selecionado = $pessoasPorPuuid["$puuid"];
-        // dd($pessoasPorPuuid);
+        dd($pessoasPorPuuid);
         // dd($selecionado);
         return [
-            "Campeão" => $selecionado["championName"],
-            "KDA" => $selecionado["challenges"]["kda"],
-            "Abates" => $selecionado["kills"],
-            "Mortes" => $selecionado["deaths"],
-            "Assistências" => $selecionado["assists"],
-            "Dano a campeões" => $selecionado["totalDamageDealtToChampions"]
+            'Campeão' => $selecionado['championName'],
+            'KDA' => $selecionado['challenges']['kda'],
+            'Abates' => $selecionado['kills'],
+            'Mortes' => $selecionado['deaths'],
+            'Assistências' => $selecionado['assists'],
+            'Dano a campeões' => $selecionado['totalDamageDealtToChampions'],
         ];
     }
 
-    public function getDezPartidas($gameName, $tagLine){
+    public function getDezPartidas($gameName, $tagLine)
+    {
         $partidas = $this->getHistorico($gameName, $tagLine);
         $dezPartidas = [];
-        for($i = 0; $i < 10; $i++) {
-        if(isset($partidas[$i])){
-            $matchId = $partidas[$i];
-            $dezPartidas[] = $this->getPartida($matchId);
+        for ($i = 0; $i < 10; $i++) {
+            if (isset($partidas[$i])) {
+                $matchId = $partidas[$i];
+                $dezPartidas[] = $this->getPartida($matchId);
+            }
         }
-    }
         return $dezPartidas;
     }
 
-    public function getTodosKDA($gameName, $tagLine){
+    public function getTodosKDA($gameName, $tagLine)
+    {
         $puuid = $this->_getPuuid($gameName, $tagLine);
         $detalhesPartidas = $this->getDezPartidas($gameName, $tagLine);
         // dd($detalhesPartidas);
@@ -116,17 +157,17 @@ class ApiController extends Controller
         foreach ($detalhesPartidas as $det) {
             // dd($det);
             $participants = $det['info']['participants'];
-            $pessoasPorPuuid = array_column($participants,null, 'puuid');
+            $pessoasPorPuuid = array_column($participants, null, 'puuid');
             $selecionado = $pessoasPorPuuid["$puuid"];
             $listaKDA[] = [
-                    "Campeão" => $selecionado["championName"],
-                    "KDA" => $selecionado["challenges"]["kda"],
-                    "Abates" => $selecionado["kills"],
-                    "Mortes" => $selecionado["deaths"],
-                    "Assistências" => $selecionado["assists"],
-                    "Dano a campeões" => $selecionado["totalDamageDealtToChampions"]
+                'Campeão' => $selecionado['championName'],
+                'KDA' => $selecionado['challenges']['kda'],
+                'Abates' => $selecionado['kills'],
+                'Mortes' => $selecionado['deaths'],
+                'Assistências' => $selecionado['assists'],
+                'Dano a campeões' => $selecionado['totalDamageDealtToChampions'],
             ];
-        };
+        }
         return $listaKDA;
         // dd($participants);
         // dd($selecionado);
@@ -151,7 +192,8 @@ class ApiController extends Controller
     //     }
     // }
 
-    public function getChampionName($key){
+    public function getChampionName($key)
+    {
         $caminho = storage_path('app/data/champions.json');
         if (file_exists($caminho)) {
             $conteudoJson = file_get_contents($caminho);

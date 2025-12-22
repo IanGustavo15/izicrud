@@ -22,6 +22,7 @@ Route::get('dashboard', function(){
     return Inertia::render('Dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
 
+Route::get('puuid/{gameName}/{tagName}', [ApiController::class, 'getPuuid'])->middleware(['auth', 'verified'])->name('puuid');
 Route::get('maestria/{gameName}/{tagName}', [ApiController::class, 'getMaestria'])->middleware(['auth', 'verified'])->name('maestria');
 Route::get('champion/{key}', [ApiController::class, 'getChampionName'])->name('champion');
 Route::get('historico/{gameName}/{tagName}', [ApiController::class, 'getHistorico'])->middleware(['auth', 'verified'])->name('historico');
