@@ -30,6 +30,8 @@ Route::get('ultimapartida/{gameName}/{tagName}', [ApiController::class, 'getUlti
 Route::get('ultimokda/{gameName}/{tagName}', [ApiController::class, 'getUltimoKDA'])->middleware(['auth', 'verified'])->name('ultimokda');
 Route::get('dezpartidas/{gameName}/{tagName}', [ApiController::class, 'getDezPartidas'])->middleware(['auth', 'verified'])->name('dezpartidas');
 Route::get('todoskda/{gameName}/{tagName}', [ApiController::class, 'getTodosKDA'])->middleware(['auth', 'verified'])->name('todoskda');
+Route::get('verificarbanco', [ApiController::class, 'testeVerificarDados'])->middleware(['auth', 'verified'])->name('verificarbanco');
+Route::get('champions/{key}', [ApiController::class, 'getChampionNameByDB'])->middleware(['auth', 'verified'])->name('champions');
 
 
 Route::get('/sempermissao', function () {

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Champion;
 use App\Models\Mastery;
 use App\Models\Player;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
@@ -40,7 +41,7 @@ class ApiController extends Controller
             ->get($url)
             ->json();
         foreach ($retornoAPI as $key => $top) {
-            $championNome = $this->getChampionName($top['championId']);
+            $championNome = $this->getChampionNameByDB($top['championId']);
             $retornoAPI[$key]['championNome'] = $championNome;
             // dd($retornoAPI[$key]);
             // dd($retornoAPI[$key]['championPoints'], $retornoAPI[$key]['championNome']);
@@ -173,25 +174,80 @@ class ApiController extends Controller
         // dd($participants);
     }
 
-    // public function championsList(){
-    //     $url = "https://ddragon.leagueoflegends.com/cdn/15.24.1/data/en_US/champion.json";
-    //     $retornoAPI = Http::get($url)->json()['data'];
+    public function verificarBanco($model, $id){
+        $query = $model::query();
+        $query->where('id', $id);
+        $ultimaAtualizacao = $query->max('updated_at');
+        if (!$ultimaAtualizacao) {
+            return false;
+        }
+        $agora = now();
+        $diferenca = $agora->diffInMinutes($ultimaAtualizacao);
+        return $diferenca <= 10;
+    }
 
-    //     // dd($retornoAPI);
+    public function testeVerificarDados($model = null, $id = null)
+    {
+        $modelMap = [
+            'player' => Player::class,
+            'mastery' => Mastery::class,
+            'champion' => Champion::class,
+        ];
 
-    //     foreach ($retornoAPI as $champ) {
-    //         Champion::updateOrCreate(
-    // ['key' => $champ['key']],
-    //     [
-    //                 'api_id' => $champ['id'],
-    //                 'name'   => $champ['name'],
-    //                 'title'  => $champ['title']
-    //             ]
-    //         );
-    //     }
-    // }
+        if (!$model) {
+            $resultados = [];
+            foreach ($modelMap as $nome => $classe) {
+                $resultados[$nome.'_todos'] = $this->verificarBanco($classe, null);
+                $resultados[$nome.'_id_1'] = $this->verificarBanco($classe, 1);
+            }
 
-    public function getChampionName($key)
+            return response()->json([
+                'message' => 'testando todos os modelos',
+                'resultados' => $resultados,
+                'timestamp' => now()
+            ]);
+        }
+
+        $modelClass = $modelMap[strtolower($model)] ?? null;
+
+        if (!$modelClass) {
+            return response()->json([
+                'error' => 'Modelo não encontrado',
+                'modelos_disponveis' => array_keys($modelMap),
+                'modelo_solicitado' => $model
+            ], 404);
+        }
+
+        $resultado = $this->verificarBanco($modelClass, $id);
+
+        return response()->json([
+            'message' => "testando modelo {$model}",
+            'modelo' => $model,
+            'record_id' => $id,
+            'resultado' => $resultado,
+            'explicacao' => $resultado ? 'Ta bom demais' : 'Ta ruim essa porra',
+            'timestamp' => now()
+        ]);
+    }
+    public function championsList(){
+        $url = "https://ddragon.leagueoflegends.com/cdn/15.24.1/data/en_US/champion.json";
+        $retornoAPI = Http::get($url)->json()['data'];
+
+        // dd($retornoAPI);
+
+        foreach ($retornoAPI as $champ) {
+            Champion::updateOrCreate(
+    ['key' => $champ['key']],
+        [
+                    'api_id' => $champ['id'],
+                    'name'   => $champ['name'],
+                    'title'  => $champ['title']
+                ]
+            );
+        }
+    }
+
+    public function getChampionNameByJSON($key)
     {
         $caminho = storage_path('app/data/champions.json');
         if (file_exists($caminho)) {
@@ -205,5 +261,14 @@ class ApiController extends Controller
             }
             return null;
         }
+    }
+
+    public function getChampionNameByDB($key){
+        $champions = Champion::where('key', $key)->value('name') ?? 'Campeão não encontrado';
+        // Outras Opções de chamar um valor específico
+        // $champions = Champion::where('key', $key)->first()?->name;
+        // $champions = Champion::where('key', $key)->firstOrFail()->name;
+        // $champions = Champion::where('key', $key)->first()->name ?? 'campeão não encontrado';
+        return $champions;
     }
 }
