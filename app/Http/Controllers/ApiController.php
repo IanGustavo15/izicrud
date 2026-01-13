@@ -56,32 +56,33 @@ class ApiController extends Controller
         return $retornoAPI;
     }
 
-    public function getMaiorMaestria($gameName, $tagLine)
+    public function getMaiorMaestria($puuid)
     {
-        $puuid = $this->_getPuuid($gameName, $tagLine);
+        if (!$puuid) { // Pra galera que esconde o nome da conta
+            return null;
+        }
         $url = "https://br1.api.riotgames.com/lol/champion-mastery/v4/champion-masteries/by-puuid/{$puuid}/top?count=1";
         $retornoAPI = Http::withHeaders([
             'X-Riot-Token' => env('API_KEY'),
         ])
             ->get($url)
             ->json();
-        foreach ($retornoAPI as $key => $top) {
+
+            $top = $retornoAPI[0];
             $championNome = $this->getChampionNameByDB($top['championId']);
-            $retornoAPI[$key]['championNome'] = $championNome;
-            // dd($retornoAPI[$key]);
-            // dd($retornoAPI[$key]['championPoints'], $retornoAPI[$key]['championNome']);
+
+            $status = ($top['championPoints'] > 500000) ? 'Mono' : 'Main';
+
             Mastery::updateOrCreate(
                 [
                     'player' => $puuid,
-                    'points' => $retornoAPI[$key]['championPoints'],
-                    'champion' => $retornoAPI[$key]['championNome']
+                    'points' => $top['championPoints'],
+                    'champion' => $championNome
                 ]);
-        }
-        // dd($retornoAPI);
-        return $retornoAPI;
-        // return $retornoAPI[0]['championNome'];
-        // return $retornoAPI[0]['championPoints'];
-        // return $retornoAPI[0]['championId'];
+        return [
+            'id' => $top['championId'],
+            'status' => $status
+        ];
     }
 
     public function getPartidaAtual($gameName, $tagLine)
@@ -104,8 +105,29 @@ class ApiController extends Controller
         }
         $timeInimigoId = ($meuTimeId == 100) ? 200 : 100;
 
-
         $inimigos = [];
+
+        foreach ($retornoAPI['participants'] as $key) {
+            if ($key['teamId'] == $timeInimigoId) {
+                $nomeCampeao = $this->getChampionNameByDB($key['championId']);
+                $rotaEstimada = $this->inferirRota($key['spell1Id'], $key['spell2Id'], $key['championId']);
+                $status = "Normal";
+                if ($key['puuid']) {
+                    $dadosMain = $this->getMaiorMaestria($key['puuid']);
+                    if ($dadosMain && $key['championId'] == $dadosMain['id']) {
+                        $status = $dadosMain['status'];
+                    }
+                } else {
+                    $status = "Oculto";
+                }
+                $inimigos[] = [
+                    'Campeão' => $nomeCampeao,
+                    'Lane' => $rotaEstimada,
+                    'status' => $status,
+                ];
+            }
+        }
+        return $inimigos;
     }
 
     public function inferirRota($spell1Id, $spell2Id, $championId){
@@ -132,18 +154,25 @@ class ApiController extends Controller
         $tags = $this->getChampionTags($championId);
 
         $temTP = ($spell1Id == $tp || $spell2Id == $tp);
+        $temIgnite = ($spell1Id == $ignite || $spell2Id == $ignite);
 
         if ($temTP && (in_array('Fighter', $tags) || in_array('Tank', $tags))) {
-            return 'Top';
+            return "Top";
+        } elseif ($temIgnite && (in_array('Fighter', $tags) || in_array('Tank', $tags))) {
+            return "Top";
         }
 
+
         if (in_array('Mage', $tags) || in_array('Assassin', $tags)) {
-            return 'Mid';
+            return "Mid";
         }
     }
 
     public function getChampionTags($key) {
         $campeao = Champion::where('key', $key)->first();
+        if (is_string($campeao->tags)) {
+            return json_decode($campeao->tags, true);
+        }
         return $campeao->tags;
     }
 
