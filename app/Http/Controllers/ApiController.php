@@ -68,6 +68,8 @@ class ApiController extends Controller
             ->get($url)
             ->json();
 
+
+
             $top = $retornoAPI[0];
             $championNome = $this->getChampionNameByDB($top['championId']);
 
@@ -75,13 +77,17 @@ class ApiController extends Controller
 
             Mastery::updateOrCreate(
                 [
-                    'player' => $puuid,
-                    'points' => $top['championPoints'],
-                    'champion' => $championNome
-                ]);
+                'player'   => $puuid,
+                'champion' => $championNome
+            ],
+            [
+                'points'   => $top['championPoints']
+            ]
+        );
         return [
             'id' => $top['championId'],
-            'status' => $status
+            'status' => $status,
+            'pontos' => $top['championPoints'],
         ];
     }
 
@@ -108,22 +114,28 @@ class ApiController extends Controller
         $inimigos = [];
 
         foreach ($retornoAPI['participants'] as $key) {
-            if ($key['teamId'] == $timeInimigoId) {
+            if ($key['teamId'] == $timeInimigoId) { // Mude $timeInimigoId para $meuTimeId para ver o time da pessoa selecionada
                 $nomeCampeao = $this->getChampionNameByDB($key['championId']);
                 $rotaEstimada = $this->inferirRota($key['spell1Id'], $key['spell2Id'], $key['championId']);
+
                 $status = "Normal";
+                $pontos = 0;
+
                 if ($key['puuid']) {
                     $dadosMain = $this->getMaiorMaestria($key['puuid']);
+
                     if ($dadosMain && $key['championId'] == $dadosMain['id']) {
                         $status = $dadosMain['status'];
+                        $pontos = $dadosMain['pontos'];
                     }
                 } else {
-                    $status = "Oculto";
+                    $status = "Oculto, o jogador está anônimo.";
                 }
                 $inimigos[] = [
                     'Campeão' => $nomeCampeao,
                     'Lane' => $rotaEstimada,
-                    'status' => $status,
+                    'Status' => $status,
+                    'Pontos' => $pontos,
                 ];
             }
         }
