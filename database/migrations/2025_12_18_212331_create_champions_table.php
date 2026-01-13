@@ -17,6 +17,7 @@ return new class extends Migration
             $table->string('api_id');
             $table->string('name');
             $table->string('title');
+            $table->string('tags');
             $table->timestamps();
         });
     }

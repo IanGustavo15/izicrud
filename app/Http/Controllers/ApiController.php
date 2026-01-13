@@ -56,6 +56,52 @@ class ApiController extends Controller
         return $retornoAPI;
     }
 
+    public function getMaiorMaestria($gameName, $tagLine)
+    {
+        $puuid = $this->_getPuuid($gameName, $tagLine);
+        $url = "https://br1.api.riotgames.com/lol/champion-mastery/v4/champion-masteries/by-puuid/{$puuid}/top?count=1";
+        $retornoAPI = Http::withHeaders([
+            'X-Riot-Token' => env('API_KEY'),
+        ])
+            ->get($url)
+            ->json();
+        foreach ($retornoAPI as $key => $top) {
+            $championNome = $this->getChampionNameByDB($top['championId']);
+            $retornoAPI[$key]['championNome'] = $championNome;
+            // dd($retornoAPI[$key]);
+            // dd($retornoAPI[$key]['championPoints'], $retornoAPI[$key]['championNome']);
+            Mastery::updateOrCreate(
+                [
+                    'player' => $puuid,
+                    'points' => $retornoAPI[$key]['championPoints'],
+                    'champion' => $retornoAPI[$key]['championNome']
+                ]);
+        }
+        // dd($retornoAPI);
+        return $retornoAPI;
+        // return $retornoAPI[0]['championNome'];
+        // return $retornoAPI[0]['championPoints'];
+        // return $retornoAPI[0]['championId'];
+    }
+
+    public function getPartidaAtual($gameName, $tagLine)
+    {
+        $puuid = $this->_getPuuid($gameName, $tagLine);
+
+        $url = "https://br1.api.riotgames.com/lol/spectator/v5/active-games/by-summoner/{$puuid}";
+        $retornoAPI = Http::withHeaders([
+                'X-Riot-Token' => env('API_KEY'),
+            ])
+                ->get($url)
+                ->json();
+
+        $meuTimeId = 0;
+        return $retornoAPI['participants'];
+        foreach ($retornoAPI as $key) {
+
+        }
+    }
+
     public function _getPuuid($gameName, $tagLine)
     {
         return Cache::remember("puuid_{$gameName}_{$tagLine}", 60 * 60 * 24 * 30, function () use ($gameName, $tagLine) {
@@ -236,12 +282,14 @@ class ApiController extends Controller
         // dd($retornoAPI);
 
         foreach ($retornoAPI as $champ) {
+        // dd($champ);
             Champion::updateOrCreate(
     ['key' => $champ['key']],
         [
                     'api_id' => $champ['id'],
                     'name'   => $champ['name'],
-                    'title'  => $champ['title']
+                    'title'  => $champ['title'],
+                    'tags'   => json_encode($champ['tags']),
                 ]
             );
         }
