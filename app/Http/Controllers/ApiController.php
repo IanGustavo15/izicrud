@@ -96,10 +96,55 @@ class ApiController extends Controller
                 ->json();
 
         $meuTimeId = 0;
-        return $retornoAPI['participants'];
-        foreach ($retornoAPI as $key) {
-
+        foreach ($retornoAPI['participants'] as $key) {
+            if ($key['puuid'] == $puuid) {
+                $meuTimeId = $key['teamId'];
+                break;
+            }
         }
+        $timeInimigoId = ($meuTimeId == 100) ? 200 : 100;
+
+
+        $inimigos = [];
+    }
+
+    public function inferirRota($spell1Id, $spell2Id, $championId){
+        $exhaust = 3;
+        $ghost = 6;
+        $flash = 4;
+        $heal = 7;
+        $smite = 11;
+        $tp = 12;
+        $ignite = 14;
+        $barrier = 21;
+
+        if ($spell1Id == $smite || $spell2Id == $smite) {
+            return "Jungle";
+        }
+        if ($spell1Id == $barrier || $spell2Id == $barrier) {
+            return "Adc";
+        }
+
+        if ($spell1Id == $heal || $spell2Id == $heal || $spell1Id == $exhaust || $spell2Id == $exhaust) {
+            return "Suporte";
+        }
+
+        $tags = $this->getChampionTags($championId);
+
+        $temTP = ($spell1Id == $tp || $spell2Id == $tp);
+
+        if ($temTP && (in_array('Fighter', $tags) || in_array('Tank', $tags))) {
+            return 'Top';
+        }
+
+        if (in_array('Mage', $tags) || in_array('Assassin', $tags)) {
+            return 'Mid';
+        }
+    }
+
+    public function getChampionTags($key) {
+        $campeao = Champion::where('key', $key)->first();
+        return $campeao->tags;
     }
 
     public function _getPuuid($gameName, $tagLine)
